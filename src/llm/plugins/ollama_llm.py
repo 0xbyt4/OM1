@@ -1,23 +1,3 @@
-"""
-Ollama LLM Plugin for OM1
-
-Provides local LLM support via Ollama API, enabling:
-- Privacy: No data sent to external servers
-- Cost-free: No API charges
-- Offline capability: Works without internet
-
-Supports models like Llama3, Mistral, Phi-3, Llava (multimodal), etc.
-
-Usage in config:
-    "cortex_llm": {
-        "type": "OllamaLLM",
-        "config": {
-            "model": "llama3.2",
-            "ollama_base_url": "http://localhost:11434"
-        }
-    }
-"""
-
 import json
 import logging
 import time
@@ -41,7 +21,7 @@ class OllamaLLMConfig(LLMConfig):
 
     Parameters
     ----------
-    ollama_base_url : str
+    base_url : str
         Base URL for Ollama API (default: http://localhost:11434)
     model : str
         Ollama model name (e.g., llama3.2, mistral, phi3, llava)
@@ -51,7 +31,7 @@ class OllamaLLMConfig(LLMConfig):
         Context window size
     """
 
-    ollama_base_url: str = Field(
+    base_url: str = Field(
         default="http://localhost:11434",
         description="Base URL for Ollama API"
     )
@@ -108,7 +88,7 @@ class OllamaLLM(LLM[R]):
         self._config: OllamaLLMConfig = config
 
         # Ollama API endpoint
-        self._base_url = config.ollama_base_url.rstrip("/")
+        self._base_url = config.base_url.rstrip("/")
         self._chat_url = f"{self._base_url}/api/chat"
 
         # HTTP client with extended timeout for local inference
