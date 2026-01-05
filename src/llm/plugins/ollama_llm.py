@@ -243,12 +243,12 @@ class OllamaLLM(LLM[R]):
 
         except httpx.ConnectError as e:
             logging.error(f"Cannot connect to Ollama at {self._base_url}. Is Ollama running?")
-            logging.error(f"Start Ollama with: ollama serve")
+            logging.error("Start Ollama with: ollama serve")
             logging.error(f"Error: {e}")
             return None
         except httpx.TimeoutException as e:
             logging.error(f"Ollama request timed out after {self._config.timeout}s")
-            logging.error(f"Try increasing timeout or using a smaller model")
+            logging.error("Try increasing timeout or using a smaller model")
             logging.error(f"Error: {e}")
             return None
         except Exception as e:
