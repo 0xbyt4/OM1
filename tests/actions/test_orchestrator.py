@@ -17,6 +17,16 @@ class MockInput:
 
 
 @dataclass
+class MultiParamInput:
+    """Input with multiple parameters for testing args passthrough."""
+
+    action: str
+    to_address: str = None
+    amount: str = None
+    chain: str = "ethereum"
+
+
+@dataclass
 class MockOutput:
     result: str
 
@@ -24,6 +34,14 @@ class MockOutput:
 @dataclass
 class MockInterface(Interface[MockInput, MockOutput]):
     input: MockInput
+    output: MockOutput
+
+
+@dataclass
+class MultiParamInterface(Interface[MultiParamInput, MockOutput]):
+    """Interface for multi-parameter actions."""
+
+    input: MultiParamInput
     output: MockOutput
 
 
@@ -507,3 +525,152 @@ class TestActionOrchestratorModeComparison:
         sequential_executed = set(MockConnector.execution_order)
 
         assert concurrent_executed == sequential_executed == {"action1", "action2"}
+
+
+class MultiParamConnector(ActionConnector[ActionConfig, MultiParamInput]):
+    """Connector that tracks all received parameters."""
+
+    def __init__(self, config: ActionConfig, action_name: str):
+        super().__init__(config)
+        self.action_name = action_name
+        self.received_inputs: List[MultiParamInput] = []
+
+    async def connect(self, output_interface: MultiParamInput) -> None:
+        """Record the full input with all parameters."""
+        self.received_inputs.append(output_interface)
+
+    def tick(self):
+        pass
+
+
+class TestActionOrchestratorMultiParam:
+    """Test multi-parameter action support via args field."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Reset state before each test."""
+        MockConnector.reset()
+
+    @pytest.fixture
+    def create_multi_param_action(self):
+        """Factory to create multi-parameter test actions."""
+
+        def _create(name: str, llm_label: str) -> AgentAction:
+            connector = MultiParamConnector(ActionConfig(), name)
+            return AgentAction(
+                name=name,
+                llm_label=llm_label,
+                interface=MultiParamInterface,
+                connector=connector,
+                exclude_from_prompt=False,
+            )
+
+        return _create
+
+    @pytest.mark.asyncio
+    async def test_action_with_args_passes_all_parameters(
+        self, mock_runtime_config, create_multi_param_action
+    ):
+        """Test that Action.args passes all parameters to connector."""
+        wallet_action = create_multi_param_action("wallet", "wallet")
+
+        mock_runtime_config.agent_actions = [wallet_action]
+        orchestrator = ActionOrchestrator(mock_runtime_config)
+
+        # Create action with args containing all parameters
+        action = Action(
+            type="wallet",
+            value="send",
+            args={
+                "action": "send",
+                "to_address": "0x123abc",
+                "amount": "0.5",
+                "chain": "polygon",
+            },
+        )
+
+        await orchestrator.promise([action])
+        await orchestrator.flush_promises()
+
+        connector = wallet_action.connector
+        assert len(connector.received_inputs) == 1
+
+        received = connector.received_inputs[0]
+        assert received.action == "send"
+        assert received.to_address == "0x123abc"
+        assert received.amount == "0.5"
+        assert received.chain == "polygon"
+
+    @pytest.mark.asyncio
+    async def test_action_without_args_uses_value_fallback(
+        self, mock_runtime_config, create_agent_action
+    ):
+        """Test that actions without args field fall back to value-based input."""
+        action = create_agent_action("move", "move")
+
+        mock_runtime_config.agent_actions = [action]
+        orchestrator = ActionOrchestrator(mock_runtime_config)
+
+        # Create action without args (legacy behavior)
+        action_obj = Action(type="move", value="forward")
+
+        await orchestrator.promise([action_obj])
+        await orchestrator.flush_promises()
+
+        connector = action.connector
+        assert "forward" in connector.connected_values
+
+    @pytest.mark.asyncio
+    async def test_action_args_none_uses_value_fallback(
+        self, mock_runtime_config, create_agent_action
+    ):
+        """Test that action with args=None falls back to value-based input."""
+        action = create_agent_action("speak", "speak")
+
+        mock_runtime_config.agent_actions = [action]
+        orchestrator = ActionOrchestrator(mock_runtime_config)
+
+        # Create action with explicit args=None
+        action_obj = Action(type="speak", value="hello", args=None)
+
+        await orchestrator.promise([action_obj])
+        await orchestrator.flush_promises()
+
+        connector = action.connector
+        assert "hello" in connector.connected_values
+
+    @pytest.mark.asyncio
+    async def test_mixed_actions_with_and_without_args(
+        self, mock_runtime_config, create_agent_action, create_multi_param_action
+    ):
+        """Test handling of mixed actions - some with args, some without."""
+        move_action = create_agent_action("move", "move")
+        wallet_action = create_multi_param_action("wallet", "wallet")
+
+        mock_runtime_config.agent_actions = [move_action, wallet_action]
+        orchestrator = ActionOrchestrator(mock_runtime_config)
+
+        actions = [
+            Action(type="move", value="forward"),  # No args
+            Action(
+                type="wallet",
+                value="send",
+                args={
+                    "action": "send",
+                    "to_address": "0x456",
+                    "amount": "1.0",
+                    "chain": "ethereum",
+                },
+            ),
+        ]
+
+        await orchestrator.promise(actions)
+        await orchestrator.flush_promises()
+
+        # Check move action used value
+        assert "forward" in move_action.connector.connected_values
+
+        # Check wallet action received all params
+        wallet_connector = wallet_action.connector
+        assert len(wallet_connector.received_inputs) == 1
+        assert wallet_connector.received_inputs[0].to_address == "0x456"

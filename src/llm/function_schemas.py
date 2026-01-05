@@ -166,7 +166,8 @@ def convert_function_calls_to_actions(function_calls: list[dict]) -> list[Action
             if not action_value and args:
                 action_value = str(list(args.values())[0])
 
-            action = Action(type=function_name, value=action_value)
+            # Pass all arguments to the Action for multi-parameter actions
+            action = Action(type=function_name, value=action_value, args=args)
             actions.append(action)
 
             logging.info(

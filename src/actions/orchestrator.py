@@ -305,8 +305,16 @@ class ActionOrchestrator:
         logging.debug(
             f"Calling action {agent_action.llm_label} with type {action.type.lower()} and argument {action.value}"
         )
+
+        # Use full args if available (from function calling), otherwise fallback to action value
+        if action.args:
+            input_kwargs = action.args
+            logging.debug(f"Using full function call args: {input_kwargs}")
+        else:
+            input_kwargs = {"action": action.value}
+
         input_interface = T.get_type_hints(agent_action.interface)["input"](
-            **{"action": action.value}
+            **input_kwargs
         )
         await agent_action.connector.connect(input_interface)
         return input_interface

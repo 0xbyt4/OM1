@@ -126,7 +126,9 @@ async def test_ask_with_tool_calls(llm, mock_response_with_tool_calls):
 
         result = await llm.ask("test prompt")
         assert isinstance(result, CortexOutputModel)
-        assert result.actions == [Action(type="test_function", value="value1")]
+        assert result.actions == [
+            Action(type="test_function", value="value1", args={"arg1": "value1"})
+        ]
 
 
 @pytest.mark.asyncio
