@@ -60,9 +60,7 @@ def mock_avatar_components():
         return decorator
 
     with (
-        patch(
-            "llm.plugins.ollama_llm.AvatarLLMState.trigger_thinking", mock_decorator
-        ),
+        patch("llm.plugins.ollama_llm.AvatarLLMState.trigger_thinking", mock_decorator),
         patch("llm.plugins.ollama_llm.AvatarLLMState") as mock_avatar_state,
         patch("providers.avatar_provider.AvatarProvider") as mock_avatar_provider,
         patch(
@@ -111,9 +109,7 @@ async def test_ask_success(llm, mock_response):
     mock_http_response.status_code = 200
     mock_http_response.json.return_value = mock_response
 
-    with patch.object(
-        llm._client, "post", AsyncMock(return_value=mock_http_response)
-    ):
+    with patch.object(llm._client, "post", AsyncMock(return_value=mock_http_response)):
         result = await llm.ask("test prompt")
         assert result is None  # No tool calls, content not JSON
 
@@ -125,9 +121,7 @@ async def test_ask_with_tool_calls(llm, mock_response_with_tool_calls):
     mock_http_response.status_code = 200
     mock_http_response.json.return_value = mock_response_with_tool_calls
 
-    with patch.object(
-        llm._client, "post", AsyncMock(return_value=mock_http_response)
-    ):
+    with patch.object(llm._client, "post", AsyncMock(return_value=mock_http_response)):
         result = await llm.ask("test prompt")
         assert isinstance(result, CortexOutputModel)
         assert result.actions == [Action(type="test_function", value="value1")]
@@ -140,9 +134,7 @@ async def test_ask_api_error(llm):
     mock_http_response.status_code = 500
     mock_http_response.text = "Internal Server Error"
 
-    with patch.object(
-        llm._client, "post", AsyncMock(return_value=mock_http_response)
-    ):
+    with patch.object(llm._client, "post", AsyncMock(return_value=mock_http_response)):
         result = await llm.ask("test prompt")
         assert result is None
 
@@ -153,7 +145,9 @@ async def test_ask_connection_error(llm):
     import httpx
 
     with patch.object(
-        llm._client, "post", AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
+        llm._client,
+        "post",
+        AsyncMock(side_effect=httpx.ConnectError("Connection refused")),
     ):
         result = await llm.ask("test prompt")
         assert result is None

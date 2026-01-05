@@ -32,24 +32,14 @@ class OllamaLLMConfig(LLMConfig):
     """
 
     base_url: str = Field(
-        default="http://localhost:11434",
-        description="Base URL for Ollama API"
+        default="http://localhost:11434", description="Base URL for Ollama API"
     )
-    model: str = Field(
-        default="llama3.2",
-        description="Ollama model name"
-    )
-    temperature: float = Field(
-        default=0.7,
-        description="Sampling temperature"
-    )
-    num_ctx: int = Field(
-        default=4096,
-        description="Context window size"
-    )
+    model: str = Field(default="llama3.2", description="Ollama model name")
+    temperature: float = Field(default=0.7, description="Sampling temperature")
+    num_ctx: int = Field(default=4096, description="Context window size")
     timeout: int = Field(
         default=120,
-        description="Request timeout in seconds (longer for local inference)"
+        description="Request timeout in seconds (longer for local inference)",
     )
 
 
@@ -119,8 +109,8 @@ class OllamaLLM(LLM[R]):
                 "function": {
                     "name": schema["function"]["name"],
                     "description": schema["function"].get("description", ""),
-                    "parameters": schema["function"].get("parameters", {})
-                }
+                    "parameters": schema["function"].get("parameters", {}),
+                },
             }
             ollama_tools.append(tool)
 
@@ -169,7 +159,7 @@ class OllamaLLM(LLM[R]):
                 "options": {
                     "temperature": self._config.temperature,
                     "num_ctx": self._config.num_ctx,
-                }
+                },
             }
 
             # Add tools if available
@@ -186,7 +176,9 @@ class OllamaLLM(LLM[R]):
             )
 
             if response.status_code != 200:
-                logging.error(f"Ollama API error: {response.status_code} - {response.text}")
+                logging.error(
+                    f"Ollama API error: {response.status_code} - {response.text}"
+                )
                 return None
 
             result = response.json()
@@ -205,14 +197,18 @@ class OllamaLLM(LLM[R]):
                 function_call_data = []
                 for tc in tool_calls:
                     func = tc.get("function", {})
-                    function_call_data.append({
-                        "function": {
-                            "name": func.get("name", ""),
-                            "arguments": json.dumps(func.get("arguments", {}))
-                            if isinstance(func.get("arguments"), dict)
-                            else func.get("arguments", "{}"),
+                    function_call_data.append(
+                        {
+                            "function": {
+                                "name": func.get("name", ""),
+                                "arguments": (
+                                    json.dumps(func.get("arguments", {}))
+                                    if isinstance(func.get("arguments"), dict)
+                                    else func.get("arguments", "{}")
+                                ),
+                            }
                         }
-                    })
+                    )
 
                 actions = convert_function_calls_to_actions(function_call_data)
                 result_model = CortexOutputModel(actions=actions)
@@ -242,7 +238,9 @@ class OllamaLLM(LLM[R]):
             return None
 
         except httpx.ConnectError as e:
-            logging.error(f"Cannot connect to Ollama at {self._base_url}. Is Ollama running?")
+            logging.error(
+                f"Cannot connect to Ollama at {self._base_url}. Is Ollama running?"
+            )
             logging.error("Start Ollama with: ollama serve")
             logging.error(f"Error: {e}")
             return None
