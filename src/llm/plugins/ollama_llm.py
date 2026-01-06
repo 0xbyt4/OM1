@@ -31,13 +31,13 @@ class OllamaLLMConfig(LLMConfig):
         Context window size
     """
 
-    base_url: str = Field(
+    base_url: T.Optional[str] = Field(
         default="http://localhost:11434", description="Base URL for Ollama API"
     )
-    model: str = Field(default="llama3.2", description="Ollama model name")
+    model: T.Optional[str] = Field(default="llama3.2", description="Ollama model name")
     temperature: float = Field(default=0.7, description="Sampling temperature")
     num_ctx: int = Field(default=4096, description="Context window size")
-    timeout: int = Field(
+    timeout: T.Optional[int] = Field(
         default=120,
         description="Request timeout in seconds (longer for local inference)",
     )
@@ -78,14 +78,16 @@ class OllamaLLM(LLM[R]):
         self._config: OllamaLLMConfig = config
 
         # Ollama API endpoint
-        self._base_url = config.base_url.rstrip("/")
+        self._base_url = (config.base_url or "http://localhost:11434").strip("/")
         self._chat_url = f"{self._base_url}/api/chat"
 
         # HTTP client with extended timeout for local inference
         self._client = httpx.AsyncClient(timeout=config.timeout)
 
-        # Initialize history manager (uses a dummy client for compatibility)
-        self.history_manager = LLMHistoryManager(self._config, None)
+        # Initialize history manager
+        self.history_manager = LLMHistoryManager(
+            self._config, self._client  # type: ignore
+        )
 
         logging.info(f"OllamaLLM initialized with model: {config.model}")
         logging.info(f"Ollama endpoint: {self._chat_url}")
