@@ -77,11 +77,9 @@ class OllamaLLM(LLM[R]):
 
         self._config: OllamaLLMConfig = config
 
-        # Ollama API endpoint
-        self._base_url = (config.base_url or "http://localhost:11434").strip("/")
+        self._base_url = (self._config.base_url or "http://localhost:11434").strip("/")
         self._chat_url = f"{self._base_url}/api/chat"
 
-        # HTTP client with extended timeout for local inference
         self._client = httpx.AsyncClient(timeout=config.timeout)
 
         # Initialize history manager
@@ -146,14 +144,12 @@ class OllamaLLM(LLM[R]):
             self.io_provider.llm_start_time = time.time()
             self.io_provider.set_llm_prompt(prompt)
 
-            # Format messages for Ollama
             formatted_messages = [
                 {"role": msg.get("role", "user"), "content": msg.get("content", "")}
                 for msg in messages
             ]
             formatted_messages.append({"role": "user", "content": prompt})
 
-            # Build request payload
             payload = {
                 "model": self._config.model,
                 "messages": formatted_messages,
@@ -164,14 +160,12 @@ class OllamaLLM(LLM[R]):
                 },
             }
 
-            # Add tools if available
             tools = self._convert_tools_to_ollama_format()
             if tools:
                 payload["tools"] = tools
 
             logging.debug(f"Ollama request payload: {json.dumps(payload, indent=2)}")
 
-            # Make request to Ollama
             response = await self._client.post(
                 self._chat_url,
                 json=payload,
@@ -190,7 +184,6 @@ class OllamaLLM(LLM[R]):
 
             message = result.get("message", {})
 
-            # Check for tool calls
             tool_calls = message.get("tool_calls", [])
             if tool_calls:
                 logging.info(f"Received {len(tool_calls)} function calls from Ollama")
@@ -215,27 +208,6 @@ class OllamaLLM(LLM[R]):
                 actions = convert_function_calls_to_actions(function_call_data)
                 result_model = CortexOutputModel(actions=actions)
                 return T.cast(R, result_model)
-
-            # If no tool calls, try to parse content as JSON for actions
-            content = message.get("content", "")
-            if content:
-                logging.info(f"Ollama content response: {content[:200]}...")
-                # Try to extract actions from content if it looks like JSON
-                try:
-                    if "{" in content and "}" in content:
-                        # Find JSON in content
-                        start = content.find("{")
-                        end = content.rfind("}") + 1
-                        json_str = content[start:end]
-                        parsed = json.loads(json_str)
-                        if "actions" in parsed:
-                            actions = convert_function_calls_to_actions(
-                                [{"function": a} for a in parsed["actions"]]
-                            )
-                            result_model = CortexOutputModel(actions=actions)
-                            return T.cast(R, result_model)
-                except (json.JSONDecodeError, KeyError):
-                    pass
 
             return None
 
