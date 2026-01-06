@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Optional
 from unittest.mock import MagicMock
 
 import pytest
@@ -21,8 +21,8 @@ class MultiParamInput:
     """Input with multiple parameters for testing args passthrough."""
 
     action: str
-    to_address: str = None
-    amount: str = None
+    to_address: Optional[str] = None
+    amount: Optional[str] = None
     chain: str = "ethereum"
 
 

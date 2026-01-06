@@ -161,6 +161,7 @@ class TestConvertFunctionCallsToActions:
 
         assert len(actions) == 1
         assert actions[0].value == "hello world"
+        assert actions[0].args is not None
         assert actions[0].args["text"] == "hello world"
 
     def test_args_dict_as_object(self):
