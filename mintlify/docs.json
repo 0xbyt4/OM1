@@ -49,7 +49,9 @@
                         "pages": [
                             "examples/overview",
                             "examples/conversation",
-                            "examples/gazebo"
+                            "examples/gazebo",
+                            "examples/smart_toy",
+                            "examples/llm_models"
                         ]
                     },
                     {
