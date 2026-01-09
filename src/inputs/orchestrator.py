@@ -1,7 +1,9 @@
 import asyncio
+import logging
 from collections.abc import Sequence
 
 from inputs.base import Sensor
+from providers.health_monitor_provider import HealthMonitorProvider
 
 
 class InputOrchestrator:
@@ -24,6 +26,11 @@ class InputOrchestrator:
         Initialize InputOrchestrator instance with input sources.
         """
         self.inputs = inputs
+        self._health_monitor = HealthMonitorProvider()
+
+        for input_sensor in self.inputs:
+            input_name = type(input_sensor).__name__
+            self._health_monitor.register(input_name, metadata={"type": "input_sensor"})
 
     async def listen(self) -> None:
         """
@@ -45,5 +52,11 @@ class InputOrchestrator:
         input : Sensor
             Input source to listen to
         """
-        async for event in input.listen():
-            await input.raw_to_text(event)
+        input_name = type(input).__name__
+        try:
+            async for event in input.listen():
+                await input.raw_to_text(event)
+                self._health_monitor.heartbeat(input_name)
+        except Exception as e:
+            self._health_monitor.report_error(input_name, str(e))
+            logging.error(f"Input {input_name} failed: {e}")
