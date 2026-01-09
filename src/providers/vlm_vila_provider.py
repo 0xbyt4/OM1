@@ -4,6 +4,7 @@ from typing import Callable, Optional
 from om1_utils import ws
 from om1_vlm import VideoStream
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -46,6 +47,9 @@ class VLMVilaProvider:
         self.video_stream: VideoStream = VideoStream(
             self.ws_client.send_message, fps=fps, device_index=camera_index
         )
+
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register("VLMVilaProvider", metadata={"type": "vision"})
 
     def register_frame_callback(self, video_callback: Optional[Callable]):
         """
@@ -92,6 +96,7 @@ class VLMVilaProvider:
                 self.stream_ws_client.send_message
             )
 
+        self._health_monitor.heartbeat("VLMVilaProvider")
         logging.info("Vila VLM provider started")
 
     def stop(self):

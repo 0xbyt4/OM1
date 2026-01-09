@@ -3,6 +3,7 @@ from typing import Callable, Optional
 
 from om1_speech import AudioOutputStream
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -41,6 +42,9 @@ class RivaTTSProvider:
             headers={"x-api-key": api_key} if api_key else None,
         )
 
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register("RivaTTSProvider", metadata={"type": "tts"})
+
     def register_tts_state_callback(self, tts_state_callback: Optional[Callable]):
         """
         Register a callback for TTS state changes.
@@ -64,6 +68,7 @@ class RivaTTSProvider:
         """
         logging.info(f"audio_stream: {text}")
         self._audio_stream.add_request({"text": text})
+        self._health_monitor.heartbeat("RivaTTSProvider")
 
     def start(self):
         """
@@ -75,6 +80,7 @@ class RivaTTSProvider:
 
         self.running = True
         self._audio_stream.start()
+        self._health_monitor.heartbeat("RivaTTSProvider")
 
     def stop(self):
         """

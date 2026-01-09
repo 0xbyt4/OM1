@@ -6,6 +6,7 @@ from om1_utils import ws
 from om1_vlm import VideoStream
 from openai import AsyncOpenAI
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -53,6 +54,9 @@ class VLMOpenAIProvider:
         )
         self.message_callback: Optional[Callable] = None
 
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register("VLMOpenAIProvider", metadata={"type": "vision"})
+
     async def _process_frame(self, frame: str):
         """
         Process a video frame using the LLM API.
@@ -91,7 +95,9 @@ class VLMOpenAIProvider:
             logging.debug(f"OpenAI LLM VLM Response: {response}")
             if self.message_callback:
                 self.message_callback(response)
+            self._health_monitor.heartbeat("VLMOpenAIProvider")
         except Exception as e:
+            self._health_monitor.report_error("VLMOpenAIProvider", str(e))
             logging.error(f"Error processing frame: {e}")
 
     def register_message_callback(self, message_callback: Optional[Callable]):
@@ -124,6 +130,7 @@ class VLMOpenAIProvider:
                 self.stream_ws_client.send_message
             )
 
+        self._health_monitor.heartbeat("VLMOpenAIProvider")
         logging.info("OpenAI VLM provider started")
 
     def stop(self):

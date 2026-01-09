@@ -3,6 +3,7 @@ from typing import Callable, Optional, Union
 
 from om1_speech import AudioOutputStream
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -57,6 +58,9 @@ class ElevenLabsTTSProvider:
         self._voice_id = voice_id
         self._model_id = model_id
         self._output_format = output_format
+
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register("ElevenLabsTTSProvider", metadata={"type": "tts"})
 
     def configure(
         self,
@@ -174,6 +178,7 @@ class ElevenLabsTTSProvider:
         if isinstance(message, str):
             message = self.create_pending_message(message)
         self._audio_stream.add_request(message)
+        self._health_monitor.heartbeat("ElevenLabsTTSProvider")
 
     def get_pending_message_count(self) -> int:
         """
@@ -196,6 +201,7 @@ class ElevenLabsTTSProvider:
 
         self.running = True
         self._audio_stream.start()
+        self._health_monitor.heartbeat("ElevenLabsTTSProvider")
 
     def stop(self):
         """

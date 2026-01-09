@@ -4,6 +4,7 @@ from typing import Callable, Optional
 from om1_speech import AudioInputStream
 from om1_utils import ws
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -67,6 +68,9 @@ class ASRProvider:
             enable_tts_interrupt=enable_tts_interrupt,
         )
 
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register("ASRProvider", metadata={"type": "speech"})
+
     def register_message_callback(self, message_callback: Optional[Callable]):
         """
         Register a callback for processing ASR results.
@@ -105,6 +109,7 @@ class ASRProvider:
                     self.audio_stream.fill_buffer_remote
                 )
 
+        self._health_monitor.heartbeat("ASRProvider")
         logging.info("ASR provider started")
 
     def stop(self):

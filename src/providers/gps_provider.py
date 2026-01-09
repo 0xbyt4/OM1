@@ -9,6 +9,7 @@ import serial
 
 from providers.fabric_map_provider import RFDataRaw
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -62,6 +63,10 @@ class GpsProvider:
 
         self.running = False
         self._thread: Optional[threading.Thread] = None
+
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register("GpsProvider", metadata={"type": "sensor"})
+
         self.start()
 
     def string_to_unix_timestamp(self, time_str: str) -> float:
@@ -176,6 +181,7 @@ class GpsProvider:
             "gps_unix_ts": self.gps_unix_ts,
             "ble_scan": self.ble_scan,
         }
+        self._health_monitor.heartbeat("GpsProvider")
 
     def compass_heading_to_direction(self, degrees: float) -> str:
         """

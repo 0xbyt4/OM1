@@ -3,6 +3,8 @@ import logging
 
 import requests
 
+from .health_monitor_provider import HealthMonitorProvider
+
 
 class UbTtsProvider:
     """
@@ -12,6 +14,8 @@ class UbTtsProvider:
     def __init__(self, url: str):
         self.tts_url = url
         self.headers = {"Content-Type": "application/json"}
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register("UbTtsProvider", metadata={"type": "tts"})
         logging.info(f"Ubtech TTS Provider initialized for URL: {self.tts_url}")
 
     def speak(self, tts: str, interrupt: bool = True, timestamp: int = 0) -> bool:
@@ -26,8 +30,12 @@ class UbTtsProvider:
             )
             response.raise_for_status()
             res = response.json()
-            return res.get("code") == 0
+            success = res.get("code") == 0
+            if success:
+                self._health_monitor.heartbeat("UbTtsProvider")
+            return success
         except requests.exceptions.RequestException as e:
+            self._health_monitor.report_error("UbTtsProvider", str(e))
             logging.error(f"Failed to send TTS command: {e}")
             return False
 
