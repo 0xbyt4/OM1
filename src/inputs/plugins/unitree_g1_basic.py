@@ -18,20 +18,20 @@ except ImportError:
     )
 
     class BmsState_:
-        """
-        Placeholder for BmsState_ when Unitree SDK is not installed.
-        """
+        """Placeholder for BmsState_ when Unitree SDK is not installed."""
 
-        def __init__(self):
-            pass
+        pass
 
     class LowState_:
-        """
-        Placeholder for LowState_ when Unitree SDK is not installed.
-        """
+        """Placeholder for LowState_ when Unitree SDK is not installed."""
 
-        def __init__(self):
-            pass
+        pass
+
+    class dds_:
+        """Placeholder for dds_ module when Unitree SDK is not installed."""
+
+        BmsState_ = BmsState_
+        LowState_ = LowState_
 
 
 # Data structure documentation:
