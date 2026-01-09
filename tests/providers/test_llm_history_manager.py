@@ -207,7 +207,7 @@ async def test_update_history_only_current_tick_inputs():
 
 @pytest.mark.asyncio
 async def test_update_history_no_inputs_for_current_tick():
-    """Test that when no inputs match current tick, only sensor info is added."""
+    """Test that when no inputs match current tick, LLM call is skipped."""
     config = MagicMock()
     config.model = "gpt-4o"
     config.history_length = 5
@@ -239,18 +239,19 @@ async def test_update_history_no_inputs_for_current_tick():
     # Increment tick to 1 without adding new inputs
     provider.io_provider.increment_tick()
 
+    initial_frame_index = history_manager.frame_index
+
     # Process with current tick = 1 (no inputs for this tick)
-    await provider.process("test prompt")
+    result = await provider.process("test prompt")
 
-    # Should have 2 messages: empty inputs and actions
-    assert len(history_manager.history) == 2
+    # LLM call should be skipped, returning None
+    assert result is None
 
-    # First message should be the inputs message with just the preamble
-    inputs_msg = history_manager.history[0]
-    assert inputs_msg.role == "user"
-    assert "TestBot sensed the following:" in inputs_msg.content
-    # Old inputs should not be included
-    assert "Old audio" not in inputs_msg.content
+    # History should remain empty (no messages added)
+    assert len(history_manager.history) == 0
+
+    # Frame index should still be incremented
+    assert history_manager.frame_index == initial_frame_index + 1
 
 
 @pytest.mark.asyncio

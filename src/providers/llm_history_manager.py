@@ -282,7 +282,7 @@ class LLMHistoryManager:
 
     @staticmethod
     def update_history() -> (
-        Callable[[Callable[..., Awaitable[R]]], Callable[..., Awaitable[R]]]
+        Callable[[Callable[..., Awaitable[R]]], Callable[..., Awaitable[Optional[R]]]]
     ):
         """
         Decorator to manage LLM history around an async function.
@@ -293,9 +293,13 @@ class LLMHistoryManager:
             Decorator function.
         """
 
-        def decorator(func: Callable[..., Awaitable[R]]) -> Callable[..., Awaitable[R]]:
+        def decorator(
+            func: Callable[..., Awaitable[R]],
+        ) -> Callable[..., Awaitable[Optional[R]]]:
             @functools.wraps(func)
-            async def wrapper(self: Any, prompt: str, *args: Any, **kwargs: Any) -> R:
+            async def wrapper(
+                self: Any, prompt: str, *args: Any, **kwargs: Any
+            ) -> Optional[R]:
                 if getattr(self, "_skip_state_management", False):
                     return await func(self, prompt, *args, **kwargs)
 
@@ -310,12 +314,21 @@ class LLMHistoryManager:
                 logging.debug(f"LLM Tasking cycle debug tracker: {cycle}")
 
                 current_tick = self.io_provider.tick_counter
-                formatted_inputs = f"{self.agent_name} sensed the following: "
+                base_message = f"{self.agent_name} sensed the following: "
+                formatted_inputs = base_message
                 for input_type, input_info in self.io_provider.inputs.items():
                     if input_info.tick == current_tick:
                         logging.debug(f"LLM: {input_type} (tick #{input_info.tick})")
                         logging.debug(f"LLM: {input_info}")
                         formatted_inputs += f"{input_type}. {input_info.input} | "
+
+                # Skip LLM call if no sensor data for current tick
+                if formatted_inputs.strip() == base_message.strip():
+                    logging.debug(
+                        f"No sensor data for tick {current_tick}, skipping LLM call"
+                    )
+                    self.history_manager.frame_index += 1
+                    return None
 
                 formatted_inputs = formatted_inputs.replace("..", ".")
                 formatted_inputs = formatted_inputs.replace("  ", " ")
@@ -332,7 +345,6 @@ class LLMHistoryManager:
                 logging.debug(f"Response to parse:\n{response}")
 
                 if response is not None:
-
                     action_message = (
                         "Given that information, **** took these actions: "
                         + (
