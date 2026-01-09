@@ -55,7 +55,30 @@ class VLMGeminiProvider:
         self.message_callback: Optional[Callable] = None
 
         self._health_monitor = HealthMonitorProvider()
-        self._health_monitor.register("VLMGeminiProvider", metadata={"type": "vision"})
+        self._health_monitor.register(
+            "VLMGeminiProvider",
+            metadata={"type": "vision"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the VLM provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("VLMGeminiProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("VLMGeminiProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"VLMGeminiProvider: Recovery failed: {e}")
+            return False
 
     async def _process_frame(self, frame: str):
         """

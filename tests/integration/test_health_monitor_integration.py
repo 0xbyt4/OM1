@@ -330,3 +330,171 @@ class TestSingletonBehavior:
 
         health2.stop_monitoring()
         assert health1._monitor_running is False
+
+
+class TestAutoRecoveryIntegration:
+    """Integration tests for auto-recovery functionality."""
+
+    def test_recovery_triggered_on_timeout(self, health_monitor):
+        """Test that recovery is triggered when provider times out."""
+        recovery_calls = []
+
+        def mock_recovery():
+            recovery_calls.append(time.time())
+            return True
+
+        health_monitor.register(
+            "TimeoutProvider",
+            recovery_callback=mock_recovery,
+        )
+        health_monitor.heartbeat("TimeoutProvider")
+
+        # Simulate timeout
+        status = health_monitor.get_provider_status("TimeoutProvider")
+        status.last_heartbeat = time.time() - 10
+
+        # Trigger check
+        health_monitor._check_and_log_health()
+
+        assert len(recovery_calls) == 1
+
+    def test_recovery_not_triggered_when_healthy(self, health_monitor):
+        """Test that recovery is not triggered for healthy providers."""
+        recovery_calls = []
+
+        def mock_recovery():
+            recovery_calls.append(time.time())
+            return True
+
+        health_monitor.register(
+            "HealthyProvider",
+            recovery_callback=mock_recovery,
+        )
+        health_monitor.heartbeat("HealthyProvider")
+
+        # Trigger check (provider is healthy)
+        health_monitor._check_and_log_health()
+
+        assert len(recovery_calls) == 0
+
+    def test_successful_recovery_resets_provider(self, health_monitor):
+        """Test that successful recovery resets provider to healthy."""
+
+        def mock_recovery():
+            # Simulate successful restart
+            health_monitor.heartbeat("RecoveringProvider")
+            return True
+
+        health_monitor.register(
+            "RecoveringProvider",
+            recovery_callback=mock_recovery,
+        )
+        health_monitor.heartbeat("RecoveringProvider")
+
+        # Simulate timeout
+        status = health_monitor.get_provider_status("RecoveringProvider")
+        status.last_heartbeat = time.time() - 10
+
+        # Trigger recovery
+        health_monitor._check_and_log_health()
+
+        # Provider should be healthy after recovery
+        status = health_monitor.get_provider_status("RecoveringProvider")
+        assert status.status == HealthStatus.HEALTHY
+
+    def test_failed_recovery_increments_attempts(self, health_monitor):
+        """Test that failed recovery increments attempt counter."""
+
+        def mock_recovery():
+            return False
+
+        health_monitor.register(
+            "FailingProvider",
+            recovery_callback=mock_recovery,
+        )
+        health_monitor._recovery_cooldown = 0
+
+        # Multiple failed recovery attempts
+        for _ in range(3):
+            health_monitor._attempt_recovery("FailingProvider")
+
+        recovery_status = health_monitor.get_recovery_status("FailingProvider")
+        assert recovery_status["attempts"] == 3
+
+    def test_recovery_respects_max_attempts(self, health_monitor):
+        """Test that recovery stops after max attempts."""
+        recovery_calls = []
+
+        def mock_recovery():
+            recovery_calls.append(1)
+            return False
+
+        health_monitor.register(
+            "MaxAttemptsProvider",
+            recovery_callback=mock_recovery,
+        )
+        health_monitor._recovery_cooldown = 0
+
+        # Try more than max attempts
+        for _ in range(5):
+            health_monitor._attempt_recovery("MaxAttemptsProvider")
+
+        # Should only have called recovery 3 times (default max)
+        assert len(recovery_calls) == 3
+
+    def test_multiple_providers_recovery(self, health_monitor):
+        """Test recovery of multiple providers simultaneously."""
+        recovery_order = []
+
+        def make_recovery(name):
+            def recovery():
+                recovery_order.append(name)
+                return True
+
+            return recovery
+
+        # Register multiple providers with recovery
+        providers = ["Provider1", "Provider2", "Provider3"]
+        for name in providers:
+            health_monitor.register(name, recovery_callback=make_recovery(name))
+            health_monitor.heartbeat(name)
+
+        # Make all unhealthy
+        for name in providers:
+            status = health_monitor.get_provider_status(name)
+            status.last_heartbeat = time.time() - 10
+
+        # Trigger check
+        health_monitor._check_and_log_health()
+
+        # All should have been recovered
+        assert len(recovery_order) == 3
+        assert set(recovery_order) == set(providers)
+
+    def test_recovery_with_error_reset(self, health_monitor):
+        """Test recovery that resets error state."""
+
+        def mock_recovery():
+            health_monitor.reset_errors("ErrorProvider")
+            health_monitor.heartbeat("ErrorProvider")
+            return True
+
+        health_monitor.register(
+            "ErrorProvider",
+            recovery_callback=mock_recovery,
+        )
+
+        # Generate errors
+        for i in range(5):
+            health_monitor.report_error("ErrorProvider", f"Error {i}")
+
+        status = health_monitor.get_provider_status("ErrorProvider")
+        assert status.status == HealthStatus.DEGRADED
+
+        # Trigger recovery
+        health_monitor._attempt_recovery("ErrorProvider")
+
+        # Should be healthy with no errors
+        status = health_monitor.get_provider_status("ErrorProvider")
+        assert status.status == HealthStatus.HEALTHY
+        assert status.error_count == 0

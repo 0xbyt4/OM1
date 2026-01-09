@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from providers.health_monitor_provider import HealthMonitorProvider
 from providers.vlm_openai_provider import VLMOpenAIProvider
 
 
@@ -24,8 +25,10 @@ def api_key():
 def reset_singleton():
     """Reset singleton instances between tests."""
     VLMOpenAIProvider.reset()  # type: ignore
+    HealthMonitorProvider.reset()  # type: ignore
     yield
     VLMOpenAIProvider.reset()  # type: ignore
+    HealthMonitorProvider.reset()  # type: ignore
 
 
 @pytest.fixture
@@ -105,3 +108,37 @@ def test_stop(base_url, api_key, fps, mock_dependencies):
 
     assert not provider.running
     mock_video_stream_instance.stop.assert_called_once()
+
+
+def test_recovery_callback_registered(base_url, api_key, fps, mock_dependencies):
+    """Test that VLMOpenAIProvider registers a recovery callback."""
+    provider = VLMOpenAIProvider(base_url, api_key, fps=fps)
+    health = HealthMonitorProvider()
+
+    assert "VLMOpenAIProvider" in health._recovery_callbacks
+    assert health._recovery_callbacks["VLMOpenAIProvider"] == provider._recover
+
+
+def test_recover_calls_stop_and_start(base_url, api_key, fps, mock_dependencies):
+    """Test that _recover stops and restarts the provider."""
+    provider = VLMOpenAIProvider(base_url, api_key, fps=fps)
+
+    with (
+        patch.object(provider, "stop") as mock_stop,
+        patch.object(provider, "start") as mock_start,
+    ):
+        result = provider._recover()
+
+        mock_stop.assert_called_once()
+        mock_start.assert_called_once()
+        assert result is True
+
+
+def test_recover_returns_false_on_exception(base_url, api_key, fps, mock_dependencies):
+    """Test that _recover returns False when an exception occurs."""
+    provider = VLMOpenAIProvider(base_url, api_key, fps=fps)
+
+    with patch.object(provider, "stop", side_effect=Exception("Test error")):
+        result = provider._recover()
+
+        assert result is False

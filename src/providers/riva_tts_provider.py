@@ -43,7 +43,30 @@ class RivaTTSProvider:
         )
 
         self._health_monitor = HealthMonitorProvider()
-        self._health_monitor.register("RivaTTSProvider", metadata={"type": "tts"})
+        self._health_monitor.register(
+            "RivaTTSProvider",
+            metadata={"type": "tts"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the TTS provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("RivaTTSProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("RivaTTSProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"RivaTTSProvider: Recovery failed: {e}")
+            return False
 
     def register_tts_state_callback(self, tts_state_callback: Optional[Callable]):
         """

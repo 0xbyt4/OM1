@@ -19,14 +19,17 @@ sys.modules["pyaudio"] = mock_pyaudio
 
 # Import after mocking
 from providers.elevenlabs_tts_provider import ElevenLabsTTSProvider  # noqa: E402
+from providers.health_monitor_provider import HealthMonitorProvider  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
 def reset_singleton():
     """Reset singleton instances between tests."""
     ElevenLabsTTSProvider.reset()  # type: ignore
+    HealthMonitorProvider.reset()  # type: ignore
     yield
     ElevenLabsTTSProvider.reset()  # type: ignore
+    HealthMonitorProvider.reset()  # type: ignore
 
 
 def test_configure_no_restart_needed_when_not_running():
@@ -157,3 +160,37 @@ def test_start_stop():
 
     provider.stop()
     assert provider.running is False
+
+
+def test_recovery_callback_registered():
+    """Test that ElevenLabsTTSProvider registers a recovery callback."""
+    provider = ElevenLabsTTSProvider()
+    health = HealthMonitorProvider()
+
+    assert "ElevenLabsTTSProvider" in health._recovery_callbacks
+    assert health._recovery_callbacks["ElevenLabsTTSProvider"] == provider._recover
+
+
+def test_recover_calls_stop_and_start():
+    """Test that _recover stops and restarts the provider."""
+    provider = ElevenLabsTTSProvider()
+
+    with (
+        patch.object(provider, "stop") as mock_stop,
+        patch.object(provider, "start") as mock_start,
+    ):
+        result = provider._recover()
+
+        mock_stop.assert_called_once()
+        mock_start.assert_called_once()
+        assert result is True
+
+
+def test_recover_returns_false_on_exception():
+    """Test that _recover returns False when an exception occurs."""
+    provider = ElevenLabsTTSProvider()
+
+    with patch.object(provider, "stop", side_effect=Exception("Test error")):
+        result = provider._recover()
+
+        assert result is False

@@ -15,8 +15,40 @@ class UbTtsProvider:
         self.tts_url = url
         self.headers = {"Content-Type": "application/json"}
         self._health_monitor = HealthMonitorProvider()
-        self._health_monitor.register("UbTtsProvider", metadata={"type": "tts"})
+        self._health_monitor.register(
+            "UbTtsProvider",
+            metadata={"type": "tts"},
+            recovery_callback=self._recover,
+        )
         logging.info(f"Ubtech TTS Provider initialized for URL: {self.tts_url}")
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover by testing connectivity to the TTS service.
+
+        Returns
+        -------
+        bool
+            True if service is reachable, False otherwise.
+        """
+        try:
+            logging.info("UbTtsProvider: Attempting recovery...")
+            response = requests.get(
+                url=self.tts_url,
+                headers=self.headers,
+                params={"timestamp": 0},
+                timeout=5,
+            )
+            if response.status_code == 200:
+                self._health_monitor.reset_errors("UbTtsProvider")
+                self._health_monitor.heartbeat("UbTtsProvider")
+                logging.info("UbTtsProvider: Recovery successful")
+                return True
+            logging.warning(f"UbTtsProvider: Service returned {response.status_code}")
+            return False
+        except Exception as e:
+            logging.error(f"UbTtsProvider: Recovery failed: {e}")
+            return False
 
     def speak(self, tts: str, interrupt: bool = True, timestamp: int = 0) -> bool:
         """Sends a request to the TTS service. Returns True on success."""

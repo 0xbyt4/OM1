@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from providers.asr_provider import ASRProvider
+from providers.health_monitor_provider import HealthMonitorProvider
 
 
 @pytest.fixture
@@ -14,8 +15,10 @@ def ws_url():
 def reset_singleton():
     """Reset singleton instances between tests."""
     ASRProvider.reset()  # type: ignore
+    HealthMonitorProvider.reset()  # type: ignore
     yield
     ASRProvider.reset()  # type: ignore
+    HealthMonitorProvider.reset()  # type: ignore
 
 
 @pytest.fixture
@@ -72,3 +75,38 @@ def test_stop(ws_url, mock_dependencies):
     assert not provider.running
     mock_audio_stream.return_value.stop.assert_called_once()
     mock_ws_client.return_value.stop.assert_called_once()
+
+
+def test_recovery_callback_registered(ws_url, mock_dependencies):
+    """Test that ASRProvider registers a recovery callback."""
+    provider = ASRProvider(ws_url)
+    health = HealthMonitorProvider()
+
+    assert "ASRProvider" in health._recovery_callbacks
+    assert health._recovery_callbacks["ASRProvider"] == provider._recover
+
+
+def test_recover_calls_stop_and_start(ws_url, mock_dependencies):
+    """Test that _recover stops and restarts the provider."""
+    mock_ws_client, mock_audio_stream = mock_dependencies
+    provider = ASRProvider(ws_url)
+
+    with (
+        patch.object(provider, "stop") as mock_stop,
+        patch.object(provider, "start") as mock_start,
+    ):
+        result = provider._recover()
+
+        mock_stop.assert_called_once()
+        mock_start.assert_called_once()
+        assert result is True
+
+
+def test_recover_returns_false_on_exception(ws_url, mock_dependencies):
+    """Test that _recover returns False when an exception occurs."""
+    provider = ASRProvider(ws_url)
+
+    with patch.object(provider, "stop", side_effect=Exception("Test error")):
+        result = provider._recover()
+
+        assert result is False

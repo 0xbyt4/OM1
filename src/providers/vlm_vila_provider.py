@@ -49,7 +49,30 @@ class VLMVilaProvider:
         )
 
         self._health_monitor = HealthMonitorProvider()
-        self._health_monitor.register("VLMVilaProvider", metadata={"type": "vision"})
+        self._health_monitor.register(
+            "VLMVilaProvider",
+            metadata={"type": "vision"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the VLM provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("VLMVilaProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("VLMVilaProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"VLMVilaProvider: Recovery failed: {e}")
+            return False
 
     def register_frame_callback(self, video_callback: Optional[Callable]):
         """
