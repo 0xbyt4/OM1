@@ -69,7 +69,30 @@ class ASRProvider:
         )
 
         self._health_monitor = HealthMonitorProvider()
-        self._health_monitor.register("ASRProvider", metadata={"type": "speech"})
+        self._health_monitor.register(
+            "ASRProvider",
+            metadata={"type": "speech"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the ASR provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("ASRProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("ASRProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"ASRProvider: Recovery failed: {e}")
+            return False
 
     def register_message_callback(self, message_callback: Optional[Callable]):
         """

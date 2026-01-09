@@ -60,7 +60,30 @@ class ElevenLabsTTSProvider:
         self._output_format = output_format
 
         self._health_monitor = HealthMonitorProvider()
-        self._health_monitor.register("ElevenLabsTTSProvider", metadata={"type": "tts"})
+        self._health_monitor.register(
+            "ElevenLabsTTSProvider",
+            metadata={"type": "tts"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the TTS provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("ElevenLabsTTSProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("ElevenLabsTTSProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"ElevenLabsTTSProvider: Recovery failed: {e}")
+            return False
 
     def configure(
         self,

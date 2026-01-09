@@ -65,9 +65,32 @@ class GpsProvider:
         self._thread: Optional[threading.Thread] = None
 
         self._health_monitor = HealthMonitorProvider()
-        self._health_monitor.register("GpsProvider", metadata={"type": "sensor"})
+        self._health_monitor.register(
+            "GpsProvider",
+            metadata={"type": "sensor"},
+            recovery_callback=self._recover,
+        )
 
         self.start()
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the GPS provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("GpsProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("GpsProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"GpsProvider: Recovery failed: {e}")
+            return False
 
     def string_to_unix_timestamp(self, time_str: str) -> float:
         """
