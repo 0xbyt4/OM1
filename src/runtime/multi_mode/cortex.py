@@ -9,6 +9,7 @@ from backgrounds.orchestrator import BackgroundOrchestrator
 from fuser import Fuser
 from inputs.orchestrator import InputOrchestrator
 from providers.config_provider import ConfigProvider
+from providers.health_monitor_provider import HealthMonitorProvider
 from providers.io_provider import IOProvider
 from providers.sleep_ticker_provider import SleepTickerProvider
 from runtime.multi_mode.config import (
@@ -68,6 +69,7 @@ class ModeCortexRuntime:
         self.io_provider = IOProvider()
         self.sleep_ticker_provider = SleepTickerProvider()
         self.config_provider = ConfigProvider()
+        self.health_monitor = HealthMonitorProvider()
 
         # Hot-reload configuration
         self.hot_reload = hot_reload
@@ -363,6 +365,9 @@ class ModeCortexRuntime:
         # Stop ConfigProvider
         self.config_provider.stop()
 
+        # Stop health monitoring
+        self.health_monitor.stop_monitoring()
+
         logging.debug("Tasks cleaned up successfully")
 
     async def run(self) -> None:
@@ -370,6 +375,7 @@ class ModeCortexRuntime:
         Start the mode-aware runtime's main execution loop.
         """
         try:
+            self.health_monitor.start_monitoring()
             self.mode_manager.set_event_loop(asyncio.get_event_loop())
 
             if not self._mode_initialized:

@@ -10,6 +10,7 @@ from backgrounds.orchestrator import BackgroundOrchestrator
 from fuser import Fuser
 from inputs.orchestrator import InputOrchestrator
 from providers.config_provider import ConfigProvider
+from providers.health_monitor_provider import HealthMonitorProvider
 from providers.io_provider import IOProvider
 from providers.sleep_ticker_provider import SleepTickerProvider
 from runtime.single_mode.config import RuntimeConfig, load_config
@@ -73,6 +74,7 @@ class CortexRuntime:
         self.sleep_ticker_provider = SleepTickerProvider()
         self.io_provider = IOProvider()
         self.config_provider = ConfigProvider()
+        self.health_monitor = HealthMonitorProvider()
 
         self.last_modified: float = 0.0
         self.config_watcher_task: Optional[asyncio.Task] = None
@@ -157,6 +159,8 @@ class CortexRuntime:
         None
         """
         try:
+            self.health_monitor.start_monitoring()
+
             if self.hot_reload:
                 self.config_watcher_task = asyncio.create_task(
                     self._check_config_changes()
@@ -415,6 +419,9 @@ class CortexRuntime:
 
         # Stop ConfigProvider
         self.config_provider.stop()
+
+        # Stop health monitoring
+        self.health_monitor.stop_monitoring()
 
         logging.debug("Tasks cleaned up successfully")
 

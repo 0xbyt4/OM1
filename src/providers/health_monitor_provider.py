@@ -84,6 +84,7 @@ class HealthMonitorProvider:
         self,
         heartbeat_timeout: float = 30.0,
         error_threshold: int = 5,
+        check_interval: float = 10.0,
     ):
         """
         Initialize the HealthMonitorProvider.
@@ -96,12 +97,19 @@ class HealthMonitorProvider:
         error_threshold : int
             Number of errors before marking provider as degraded.
             Default is 5.
+        check_interval : float
+            Interval in seconds between health checks when background
+            monitoring is enabled. Default is 10.0.
         """
         self._lock: threading.Lock = threading.Lock()
         self._providers: Dict[str, ProviderHealth] = {}
         self._heartbeat_timeout = heartbeat_timeout
         self._error_threshold = error_threshold
+        self._check_interval = check_interval
         self._start_time = time.time()
+
+        self._monitor_thread: Optional[threading.Thread] = None
+        self._monitor_running = False
 
         logging.info("HealthMonitorProvider initialized")
 
@@ -345,3 +353,101 @@ class HealthMonitorProvider:
                 "unhealthy": unhealthy_count,
                 "unknown": unknown_count,
             }
+
+    def start_monitoring(self) -> None:
+        """
+        Start background health monitoring thread.
+
+        The monitor periodically checks provider health and logs warnings
+        when providers are unhealthy or degraded. Only logs when issues
+        are detected to avoid log spam.
+        """
+        if self._monitor_running:
+            logging.warning("Health monitoring is already running")
+            return
+
+        self._monitor_running = True
+        self._monitor_thread = threading.Thread(
+            target=self._monitor_loop, daemon=True, name="HealthMonitor"
+        )
+        self._monitor_thread.start()
+        logging.info(
+            f"Health monitoring started (interval: {self._check_interval}s, "
+            f"timeout: {self._heartbeat_timeout}s)"
+        )
+
+    def stop_monitoring(self) -> None:
+        """
+        Stop background health monitoring thread.
+        """
+        if not self._monitor_running:
+            return
+
+        self._monitor_running = False
+        if self._monitor_thread:
+            self._monitor_thread.join(timeout=5)
+            self._monitor_thread = None
+        logging.info("Health monitoring stopped")
+
+    def _monitor_loop(self) -> None:
+        """
+        Background monitoring loop that checks health and logs issues.
+
+        Only logs when there are problems to avoid unnecessary log entries.
+        """
+        while self._monitor_running:
+            try:
+                self._check_and_log_health()
+            except Exception as e:
+                logging.error(f"Health monitor error: {e}")
+
+            time.sleep(self._check_interval)
+
+    def _check_and_log_health(self) -> None:
+        """
+        Check health status and log any issues found.
+
+        Logs warnings for degraded providers and errors for unhealthy ones.
+        """
+        summary = self.get_summary()
+        current_time = time.time()
+
+        # Only log if there are issues
+        if summary["overall_status"] == "healthy":
+            return
+
+        # Get details about problematic providers
+        unhealthy_details = []
+        degraded_details = []
+
+        with self._lock:
+            for name, provider in self._providers.items():
+                seconds_since_heartbeat = (
+                    round(current_time - provider.last_heartbeat, 1)
+                    if provider.last_heartbeat
+                    else None
+                )
+
+                # Check for timeout (unhealthy)
+                if (
+                    provider.last_heartbeat
+                    and current_time - provider.last_heartbeat > self._heartbeat_timeout
+                ):
+                    unhealthy_details.append(
+                        f"{name} (no heartbeat for {seconds_since_heartbeat}s)"
+                    )
+                elif provider.status == HealthStatus.UNHEALTHY:
+                    detail = f"{name}"
+                    if provider.last_error:
+                        detail += f": {provider.last_error}"
+                    unhealthy_details.append(detail)
+                elif provider.status == HealthStatus.DEGRADED:
+                    degraded_details.append(f"{name} ({provider.error_count} errors)")
+
+        # Log unhealthy providers as ERROR
+        if unhealthy_details:
+            logging.error(f"Unhealthy providers: {', '.join(unhealthy_details)}")
+
+        # Log degraded providers as WARNING
+        if degraded_details:
+            logging.warning(f"Degraded providers: {', '.join(degraded_details)}")

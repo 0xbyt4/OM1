@@ -204,3 +204,62 @@ class TestHealthMonitorProvider:
 
         status = health_monitor.get_provider_status("sensor")
         assert status.metadata["temperature"] == 25.5
+
+    def test_start_stop_monitoring(self, health_monitor):
+        """Test starting and stopping background monitoring."""
+        health_monitor.start_monitoring()
+        assert health_monitor._monitor_running is True
+        assert health_monitor._monitor_thread is not None
+        assert health_monitor._monitor_thread.is_alive()
+
+        health_monitor.stop_monitoring()
+        assert health_monitor._monitor_running is False
+
+    def test_monitoring_logs_unhealthy(self, health_monitor, caplog):
+        """Test that monitoring logs unhealthy providers."""
+        import logging
+
+        health_monitor.register("test_provider")
+        health_monitor.heartbeat("test_provider")
+
+        # Simulate timeout
+        status = health_monitor.get_provider_status("test_provider")
+        status.last_heartbeat = time.time() - 10  # 10s ago, timeout is 5s
+
+        with caplog.at_level(logging.ERROR):
+            health_monitor._check_and_log_health()
+
+        assert "Unhealthy providers" in caplog.text
+        assert "test_provider" in caplog.text
+
+    def test_monitoring_logs_degraded(self, health_monitor, caplog):
+        """Test that monitoring logs degraded providers."""
+        import logging
+
+        health_monitor.register("degraded_provider")
+        health_monitor.heartbeat("degraded_provider")
+
+        # Trigger degradation (3 errors with threshold=3)
+        for i in range(3):
+            health_monitor.report_error("degraded_provider", f"Error {i}")
+
+        with caplog.at_level(logging.WARNING):
+            health_monitor._check_and_log_health()
+
+        assert "Degraded providers" in caplog.text
+        assert "degraded_provider" in caplog.text
+
+    def test_monitoring_no_log_when_healthy(self, health_monitor, caplog):
+        """Test that monitoring does not log when all providers are healthy."""
+        import logging
+
+        health_monitor.register("healthy1")
+        health_monitor.register("healthy2")
+        health_monitor.heartbeat("healthy1")
+        health_monitor.heartbeat("healthy2")
+
+        with caplog.at_level(logging.WARNING):
+            health_monitor._check_and_log_health()
+
+        assert "Unhealthy providers" not in caplog.text
+        assert "Degraded providers" not in caplog.text
