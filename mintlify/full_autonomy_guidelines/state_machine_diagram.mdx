@@ -1,0 +1,181 @@
+---
+title: State Machine Diagram
+description: "Visual representation of the Multi-Mode Manager state machine"
+---
+
+## Overview
+
+This document provides visual diagrams for the Multi-Mode Manager state machine. For detailed explanations of modes, lifecycle, and transition rules, see the related documentation:
+
+- [Modes](/full_autonomy_guidelines/modes) - What are modes and their descriptions
+- [Lifecycle](/full_autonomy_guidelines/lifecycle) - Lifecycle stages and hooks
+- [Transition Rules](/full_autonomy_guidelines/transition_rules) - How transitions work
+
+## State Diagram
+
+The following diagram shows all available modes and their possible transitions:
+
+```mermaid
+stateDiagram-v2
+    [*] --> welcome: Initialize (default_mode)
+
+    welcome --> slam: "explore/map/navigate"
+    welcome --> navigation: "navigate/go to"
+    welcome --> conversation: "talk/chat"
+    welcome --> guard: "guard/security/patrol"
+
+    slam --> navigation: "navigate" OR context:exploration_done
+    slam --> conversation: "stop exploring/come back"
+    slam --> guard: "guard/security"
+
+    navigation --> conversation: "stop/chat"
+    navigation --> guard: "guard/security"
+
+    conversation --> guard: "guard/security" OR timeout(300s)
+
+    guard --> conversation: "stop guarding/talk"
+    guard --> navigation: "navigate/go to"
+
+    welcome --> welcome: "reset/restart"
+    slam --> welcome: "reset/restart"
+    navigation --> welcome: "reset/restart"
+    conversation --> welcome: "reset/restart"
+    guard --> welcome: "reset/restart"
+```
+
+## Transition Flow
+
+This diagram shows how transitions are evaluated and processed:
+
+```mermaid
+flowchart TB
+    subgraph Triggers["Transition Triggers"]
+        INPUT["INPUT_TRIGGERED\nVoice keywords"]
+        TIME["TIME_BASED\nTimeout exceeded"]
+        CONTEXT["CONTEXT_AWARE\nConditions met"]
+        MANUAL["MANUAL\nAPI call"]
+    end
+
+    subgraph Guards["Guards & Conditions"]
+        COOLDOWN["Cooldown Check\ntime since last > cooldown_seconds"]
+        LOCK["Transition Lock\n_is_transitioning == false"]
+        VALID["Validity Check\ntarget mode exists"]
+        PRIORITY["Priority Evaluation\nhighest priority wins"]
+    end
+
+    INPUT --> COOLDOWN
+    TIME --> COOLDOWN
+    CONTEXT --> COOLDOWN
+    MANUAL --> VALID
+
+    COOLDOWN --> LOCK
+    VALID --> LOCK
+    LOCK --> PRIORITY
+    PRIORITY --> EXECUTE["Execute Transition"]
+```
+
+## Lifecycle Hooks Sequence
+
+This sequence diagram shows the order of operations during a mode transition:
+
+```mermaid
+sequenceDiagram
+    participant C as Caller
+    participant M as ModeManager
+    participant FM as FromMode
+    participant G as GlobalHooks
+    participant TM as ToMode
+    participant S as State
+
+    C->>M: request_transition(target_mode)
+    M->>M: Acquire transition_lock
+
+    rect rgb(255, 230, 230)
+        Note over M: Exit Phase
+        M->>FM: execute ON_EXIT hooks
+        FM-->>M: exit_success
+        M->>G: execute global ON_EXIT hooks
+        G-->>M: global_exit_success
+    end
+
+    rect rgb(230, 255, 230)
+        Note over M: State Update
+        M->>S: previous_mode = current_mode
+        M->>S: current_mode = target_mode
+        M->>S: update timestamps
+        M->>S: append to transition_history
+    end
+
+    rect rgb(230, 230, 255)
+        Note over M: Entry Phase
+        M->>TM: execute ON_ENTRY hooks
+        TM-->>M: entry_success
+        M->>G: execute global ON_ENTRY hooks
+        G-->>M: global_entry_success
+    end
+
+    M->>M: notify_transition_callbacks
+    M->>M: save_mode_state
+    M->>M: Release transition_lock
+    M-->>C: return True
+```
+
+## Tick Processing
+
+Every tick, the manager checks for possible transitions in this order:
+
+```mermaid
+flowchart TD
+    TICK["process_tick()"] --> CHECK_TIME{"Time-based\ntransition?"}
+    CHECK_TIME -->|timeout exceeded| TRANSITION["request_transition()"]
+    CHECK_TIME -->|no| CHECK_CONTEXT{"Context-aware\ntransition?"}
+    CHECK_CONTEXT -->|conditions met| TRANSITION
+    CHECK_CONTEXT -->|no| CHECK_INPUT{"Input-triggered\ntransition?"}
+    CHECK_INPUT -->|keywords match| TRANSITION
+    CHECK_INPUT -->|no| END["Continue in current mode"]
+    TRANSITION --> END
+```
+
+## Transition Rules Summary
+
+| From | To | Trigger | Keywords | Priority | Cooldown |
+|------|-----|---------|----------|----------|----------|
+| welcome | slam | INPUT | explore, map, navigate, look around | 3 | 5s |
+| welcome | navigation | INPUT | navigate, go to, take me to | 3 | 5s |
+| welcome | conversation | INPUT | talk, chat, tell me | 2 | 3s |
+| welcome | guard | INPUT | guard, security, patrol | 4 | 10s |
+| slam | navigation | INPUT/CONTEXT | navigate, exploration_done:true | 2-3 | 5s |
+| slam | conversation | INPUT | stop exploring, come back | 2 | 5s |
+| slam | guard | INPUT | guard, security | 3 | 10s |
+| navigation | conversation | INPUT | stop, chat, talk | 2 | 5s |
+| navigation | guard | INPUT | guard, security | 3 | 10s |
+| conversation | guard | INPUT/TIME | guard, security OR 300s timeout | 2-3 | 10s |
+| guard | conversation | INPUT | stop guarding, talk | 3 | 5s |
+| guard | navigation | INPUT | navigate, go to | 2 | 5s |
+| * | welcome | INPUT | reset, restart, initialize | 5 | 10s |
+
+## Hook Handler Types
+
+```mermaid
+flowchart LR
+    HOOK["Lifecycle Hook"] --> MSG["message\nTTS announcement"]
+    HOOK --> FUNC["function\nPython callback"]
+    HOOK --> CMD["command\nShell execution"]
+    HOOK --> ACT["action\nRobot action"]
+```
+
+## State Persistence
+
+The mode manager persists state across restarts:
+
+- **File:** `/config/memory/.<config_name>.memory.json5`
+- **Saved on:** Every successful transition
+- **Restored on:** System startup (if `mode_memory_enabled: true`)
+- **History:** Last 50 transitions (trimmed to 25 when exceeded)
+
+## Related Files
+
+| File | Description |
+|------|-------------|
+| `src/runtime/multi_mode/manager.py` | Main implementation |
+| `config/unitree_go2_modes.json5` | Example configuration |
