@@ -4,6 +4,7 @@ from typing import Callable, Optional
 from om1_speech import AudioRTSPInputStream
 from om1_utils import ws
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -55,6 +56,32 @@ class ASRRTSPProvider:
             enable_tts_interrupt=enable_tts_interrupt,
         )
 
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register(
+            "ASRRTSPProvider",
+            metadata={"type": "speech", "source": "rtsp"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the ASR RTSP provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("ASRRTSPProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("ASRRTSPProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"ASRRTSPProvider: Recovery failed: {e}")
+            return False
+
     def register_message_callback(self, message_callback: Optional[Callable]):
         """
         Register a callback for processing ASR results.
@@ -82,6 +109,7 @@ class ASRRTSPProvider:
         self.ws_client.start()
         self.audio_stream.start()
 
+        self._health_monitor.heartbeat("ASRRTSPProvider")
         logging.info("ASR RTSP provider started")
 
     def stop(self):

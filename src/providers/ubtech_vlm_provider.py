@@ -3,6 +3,7 @@ from typing import Callable, Optional, Tuple
 
 from om1_utils import ws
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 from .ubtech_video_stream import UbtechCameraVideoStream
 
@@ -53,6 +54,32 @@ class UbtechVLMProvider:
             robot_ip=robot_ip,
         )
 
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register(
+            "UbtechVLMProvider",
+            metadata={"type": "vision", "robot": "ubtech"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the Ubtech VLM provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("UbtechVLMProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("UbtechVLMProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"UbtechVLMProvider: Recovery failed: {e}")
+            return False
+
     def register_message_callback(self, callback: Optional[Callable]):
         """
         Register a callback for processing VLM results.
@@ -83,6 +110,7 @@ class UbtechVLMProvider:
                 self.stream_ws_client.send_message
             )
 
+        self._health_monitor.heartbeat("UbtechVLMProvider")
         logging.info("Ubtech VLM provider started")
 
     def stop(self):

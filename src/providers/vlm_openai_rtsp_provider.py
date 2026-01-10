@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, List, Optional
 from om1_vlm import VideoRTSPStream
 from openai import AsyncOpenAI
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -66,6 +67,32 @@ class VLMOpenAIRTSPProvider:
         self.batch_interval = batch_interval
         self.frame_queue: deque = deque(maxlen=batch_size)
         self.batch_task: Optional[asyncio.Task] = None
+
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register(
+            "VLMOpenAIRTSPProvider",
+            metadata={"type": "vision", "source": "rtsp"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the VLM OpenAI RTSP provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("VLMOpenAIRTSPProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("VLMOpenAIRTSPProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"VLMOpenAIRTSPProvider: Recovery failed: {e}")
+            return False
 
     def _queue_frame(self, frame_data: str):
         """
@@ -143,9 +170,11 @@ class VLMOpenAIRTSPProvider:
 
             if self.message_callback:
                 self.message_callback(response)
+                self._health_monitor.heartbeat("VLMOpenAIRTSPProvider")
 
         except Exception as e:
             logging.error(f"Error processing batch: {e}")
+            self._health_monitor.report_error("VLMOpenAIRTSPProvider", str(e))
 
     def register_message_callback(self, message_callback: Optional[Callable]):
         """
@@ -175,6 +204,7 @@ class VLMOpenAIRTSPProvider:
         # Start the batch processing task
         self.batch_task = asyncio.create_task(self._process_batch())
 
+        self._health_monitor.heartbeat("VLMOpenAIRTSPProvider")
         logging.info("OpenAI VLM RTSP provider started with batch processing")
 
     def stop(self):

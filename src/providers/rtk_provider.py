@@ -8,6 +8,7 @@ from typing import Optional
 import serial
 from pynmeagps import NMEAReader
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -54,7 +55,34 @@ class RtkProvider:
 
         self.running = False
         self._thread: Optional[threading.Thread] = None
+
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register(
+            "RtkProvider",
+            metadata={"type": "sensor", "device": "rtk_gps"},
+            recovery_callback=self._recover,
+        )
+
         self.start()
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the RTK provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("RtkProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("RtkProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"RtkProvider: Recovery failed: {e}")
+            return False
 
     def utc_time_obj_to_unix(self, utc_time_obj):
         """
@@ -161,6 +189,7 @@ class RtkProvider:
             "rtk_qua": self.qua,
             "rtk_unix_ts": self.unix_ts,
         }
+        self._health_monitor.heartbeat("RtkProvider")
 
     def start(self):
         """

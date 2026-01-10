@@ -5,6 +5,7 @@ import zenoh
 
 from zenoh_msgs import open_zenoh_session, sensor_msgs
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -29,7 +30,33 @@ class D435Provider:
         except Exception as e:
             logging.error(f"Error opening Zenoh client: {e}")
 
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register(
+            "D435Provider",
+            metadata={"type": "sensor", "device": "realsense_d435"},
+            recovery_callback=self._recover,
+        )
+
         self.start()
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the D435 provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("D435Provider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("D435Provider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"D435Provider: Recovery failed: {e}")
+            return False
 
     def calculate_angle_and_distance(self, world_x: float, world_y: float) -> tuple:
         """
@@ -76,8 +103,10 @@ class D435Provider:
                     {"x": x, "y": y, "z": z, "angle": angle, "distance": distance}
                 )
             self.obstacle = obstacles
+            self._health_monitor.heartbeat("D435Provider")
         except Exception as e:
             logging.error(f"Error processing obstacle info: {e}")
+            self._health_monitor.report_error("D435Provider", str(e))
 
     def start(self):
         """

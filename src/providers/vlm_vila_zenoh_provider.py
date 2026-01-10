@@ -4,6 +4,7 @@ from typing import Callable, Optional
 from om1_utils import ws
 from om1_vlm import VideoZenohStream
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -40,6 +41,32 @@ class VLMVilaZenohProvider:
             decode_format,
             frame_callback=self.ws_client.send_message,
         )
+
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register(
+            "VLMVilaZenohProvider",
+            metadata={"type": "vision", "source": "zenoh"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the VLM Vila Zenoh provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("VLMVilaZenohProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("VLMVilaZenohProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"VLMVilaZenohProvider: Recovery failed: {e}")
+            return False
 
     def register_frame_callback(self, video_callback: Optional[Callable]):
         """
@@ -80,6 +107,7 @@ class VLMVilaZenohProvider:
         self.ws_client.start()
         self.video_stream.start()
 
+        self._health_monitor.heartbeat("VLMVilaZenohProvider")
         logging.info("Vila VLM Zenoh provider started")
 
     def stop(self):

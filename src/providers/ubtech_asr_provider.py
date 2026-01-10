@@ -6,6 +6,7 @@ from typing import Callable, Dict, Optional
 
 import requests
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -40,6 +41,32 @@ class UbtechASRProvider:
         self._message_callback: Optional[Callable] = None
         self._set_robot_language(language_code)
 
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register(
+            "UbtechASRProvider",
+            metadata={"type": "speech", "robot": "ubtech"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the Ubtech ASR provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("UbtechASRProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("UbtechASRProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"UbtechASRProvider: Recovery failed: {e}")
+            return False
+
     def register_message_callback(self, cb: Optional[Callable]):
         """
         Register a callback to process recognized ASR messages.
@@ -63,6 +90,7 @@ class UbtechASRProvider:
         self.running = True
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
+        self._health_monitor.heartbeat("UbtechASRProvider")
 
     def stop(self):
         """
@@ -126,6 +154,7 @@ class UbtechASRProvider:
                             f"UbtechASRProvider: Calling message callback with: '{text}'"
                         )
                         self._message_callback(text)
+                        self._health_monitor.heartbeat("UbtechASRProvider")
                 # If text is None here, it means _get_single_utterance timed out or returned no speech, which is normal.
 
             except (
@@ -134,12 +163,14 @@ class UbtechASRProvider:
                 logging.error(
                     f"UbtechASRProvider: RequestException during _get_single_utterance: {e}"
                 )
+                self._health_monitor.report_error("UbtechASRProvider", str(e))
                 # text remains None
             except Exception as e:  # Catch any other unexpected errors
                 logging.error(
                     f"UbtechASRProvider: Unexpected error in _run's try block: {e}",
                     exc_info=True,
                 )
+                self._health_monitor.report_error("UbtechASRProvider", str(e))
                 # text remains None
             finally:
                 # CRITICAL: Always pause after an attempt, regardless of success, an error, or empty text.

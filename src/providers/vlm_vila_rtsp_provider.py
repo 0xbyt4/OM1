@@ -4,6 +4,7 @@ from typing import Callable, Optional
 from om1_utils import ws
 from om1_vlm import VideoRTSPStream
 
+from .health_monitor_provider import HealthMonitorProvider
 from .singleton import singleton
 
 
@@ -47,6 +48,32 @@ class VLMVilaRTSPProvider:
             fps=fps,
         )
 
+        self._health_monitor = HealthMonitorProvider()
+        self._health_monitor.register(
+            "VLMVilaRTSPProvider",
+            metadata={"type": "vision", "source": "rtsp"},
+            recovery_callback=self._recover,
+        )
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the VLM Vila RTSP provider by restarting.
+
+        Returns
+        -------
+        bool
+            True if recovery succeeded, False otherwise.
+        """
+        try:
+            logging.info("VLMVilaRTSPProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("VLMVilaRTSPProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"VLMVilaRTSPProvider: Recovery failed: {e}")
+            return False
+
     def register_frame_callback(self, video_callback: Optional[Callable]):
         """
         Register a callback for processing video frames.
@@ -86,6 +113,7 @@ class VLMVilaRTSPProvider:
         self.ws_client.start()
         self.video_stream.start()
 
+        self._health_monitor.heartbeat("VLMVilaRTSPProvider")
         logging.info("Vila VLM RTSP provider started")
 
     def stop(self):
