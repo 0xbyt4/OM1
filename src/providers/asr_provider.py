@@ -4,6 +4,7 @@ from typing import Callable, Optional
 from om1_speech import AudioInputStream
 from om1_utils import ws
 
+from .prometheus_monitor import PrometheusMonitor
 from .singleton import singleton
 
 
@@ -67,6 +68,14 @@ class ASRProvider:
             enable_tts_interrupt=enable_tts_interrupt,
         )
 
+        # Register with Prometheus monitor
+        self._monitor = PrometheusMonitor()
+        self._monitor.register(
+            "ASRProvider",
+            metadata={"type": "asr", "ws_url": ws_url},
+            recovery_callback=self._recover,
+        )
+
     def register_message_callback(self, message_callback: Optional[Callable]):
         """
         Register a callback for processing ASR results.
@@ -106,6 +115,7 @@ class ASRProvider:
                 )
 
         logging.info("ASR provider started")
+        self._monitor.heartbeat("ASRProvider")
 
     def stop(self):
         """
@@ -119,3 +129,22 @@ class ASRProvider:
 
         if self.stream_ws_client:
             self.stream_ws_client.stop()
+
+    def _recover(self) -> bool:
+        """
+        Attempt to recover the ASR provider.
+
+        Returns
+        -------
+        bool
+            True if recovery was successful, False otherwise.
+        """
+        try:
+            logging.info("ASRProvider: Attempting recovery...")
+            self.stop()
+            self.start()
+            logging.info("ASRProvider: Recovery successful")
+            return True
+        except Exception as e:
+            logging.error(f"ASRProvider: Recovery failed: {e}")
+            return False
