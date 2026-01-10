@@ -73,8 +73,5 @@ async def test_input_exception_handling():
     normal_input.raw_to_text = AsyncMock()
     orchestrator = InputOrchestrator([error_input, normal_input])
 
-    # Should NOT raise - other inputs should continue working
     await asyncio.wait_for(orchestrator.listen(), timeout=5.0)
-
-    # Normal input should have processed all its events despite error_input failing
     assert normal_input.raw_to_text.call_count == 3
