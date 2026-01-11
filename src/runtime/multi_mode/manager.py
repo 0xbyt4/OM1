@@ -107,7 +107,7 @@ class ModeManager:
         except Exception as e:
             logging.error(f"Error opening Zenoh client: {e}")
             self.session = None
-            self.pub = None
+            self._zenoh_mode_status_response_pub = None
 
         logging.info(
             f"Mode Manager initialized with current mode: {self.state.current_mode}"
@@ -759,9 +759,10 @@ class ModeManager:
                 current_mode=String(self.state.current_mode),
                 message=String(json.dumps(self.get_mode_info())),
             )
-            return self._zenoh_mode_status_response_pub.put(
-                mode_status_response.serialize()
-            )
+            if self._zenoh_mode_status_response_pub is not None:
+                return self._zenoh_mode_status_response_pub.put(
+                    mode_status_response.serialize()
+                )
 
     def _zenoh_context_update(self, data: zenoh.Sample):
         """
@@ -819,7 +820,8 @@ class ModeManager:
                 message=String(f"Failed to switch to mode {target_mode}"),
             )
 
-        self._zenoh_mode_status_response_pub.put(mode_status_response.serialize())
+        if self._zenoh_mode_status_response_pub is not None:
+            self._zenoh_mode_status_response_pub.put(mode_status_response.serialize())
 
     def _get_state_file_path(self) -> str:
         """
