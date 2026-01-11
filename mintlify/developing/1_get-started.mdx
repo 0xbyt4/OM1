@@ -67,56 +67,99 @@ sudo apt-get install ffmpeg
 ```
 ## CLI
 
-OM1 provides a command-line interface (CLI). The main entry point is `src/run.py` which provides the following commands:
-
-- `start`: Start an agent with a specified config
+OM1 provides a powerful command-line interface (CLI). The main command is `om1` which provides comprehensive agent management:
 
 ```bash
-python src/run.py start [config_name] [--log-level] [--log-to-file]
+# Using uv run
+uv run om1 <command> [options]
+
+# Or activate venv first, then use directly
+source .venv/bin/activate
+om1 <command> [options]
 ```
 
-- `config_name`: Name of the config file (without `.json5` extension) in the `/config` directory.
-- `--log-level`: Optional log level (default: `INFO`). Use `DEBUG` for detailed logs.
-- `--log-to-file`: Optional flag to log to `logs/{config_name}.log` (default: `False`).
+**Core Commands:**
+- `om1 run <config>`: Start an agent
+- `om1 stop <config>`: Stop an agent
+- `om1 status`: Show running agents
+- `om1 list`: List available configurations
+- `om1 doctor`: Check system requirements
+- `om1 setup`: Interactive setup wizard
+
+For complete CLI documentation, see [CLI Reference](./10_cli).
 
 ## Installation and Setup
 
-1. Clone the repository
+### 1. Clone the repository
 
-Run the following commands to clone the repository and set up the environment:
-
-```bash clone repo
+```bash
 git clone https://github.com/OpenMind/OM1.git
 cd OM1
 git submodule update --init
-uv venv
 ```
 
-2. Set the configuration variables
-
-Locate the `config` folder and add your OpenMind API key to `/config/spot.json` (for example). If you do not already have one, you can obtain a free access key at https://portal.openmind.org/.
+### 2. Install dependencies
 
 ```bash
-# /config/spot.json5
-...
-"api_key": "om1_live_..."
-...
+# Minimal install (~500MB) - for local LLM (Ollama)
+uv sync
+
+# Or install with specific extras as needed
+uv sync --extra vision      # For vision/face detection
+uv sync --extra twitter     # For Twitter integration
+uv sync --extra robotics    # For robot hardware
+uv sync --extra full        # Everything
 ```
 
-Or, create a `.env` file in the project directory and add the following:
-
-Note: Using the placeholder key **openmind_free** will generate errors.
+### 3. Run setup wizard (recommended for first-time users)
 
 ```bash
+uv run om1 setup
+```
+
+This will guide you through:
+- Choosing a configuration
+- Installing required dependencies
+- Setting up environment variables
+- Validating your setup
+
+### 4. Or configure manually
+
+Create a `.env` file from the template:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add your API keys:
+
+```bash
+# Required for most configs
 OM_API_KEY=om1_live_...
+
+# For OpenAI-based configs
+OPENAI_API_KEY=sk-...
 ```
 
-3. Run the Spot Agent
+Get your OpenMind API key at https://portal.openmind.org/
 
-Run the following command to start the Spot Agent:
+### 5. Verify setup
 
 ```bash
-uv run src/run.py spot
+uv run om1 doctor
+```
+
+### 6. Run an agent
+
+```bash
+# List available configurations
+uv run om1 list
+
+# Run an agent (e.g., local LLM)
+uv run om1 run ollama
+
+# Or run Spot agent
+uv run om1 run spot
 ```
 
 **Note**: Agent configuration names are only required when switching between different agents. Once an agent has been run, it becomes the default for subsequent executions.
@@ -157,7 +200,7 @@ Upon successful initialization, a `.runtime.json5` file will be generated in the
 After the initial run, you can start the agent using the simplified command:
 
 ```bash
-uv run src/run.py
+uv run om1 run
 ```
 
 ![Reference](../assets/hot_reload.png)
@@ -169,7 +212,7 @@ The system will automatically load the most recent agent configuration from memo
 To run a different agent (for example, the conversation agent), specify the configuration name explicitly:
 
 ```bash
-uv run src/run.py conversation
+uv run om1 run conversation
 ```
 
 ### WebSim to check input and output
@@ -221,13 +264,29 @@ There are more pre-configured agents in the `/config` folder. They can be run wi
 For example, to run the `cubly` agent:
 
 ```bash
-uv run src/run.py cubly
+uv run om1 run cubly
 ```
 
 If you configure a custom agent, replace `<agent_name>` with your agent and run the below command:
 
 ```bash
-uv run src/run.py <agent_name>
+uv run om1 run <agent_name>
+```
+
+## Managing Running Agents
+
+```bash
+# Check running agents
+uv run om1 status
+
+# Stop a specific agent
+uv run om1 stop cubly
+
+# Stop all agents
+uv run om1 stop --all
+
+# Restart an agent
+uv run om1 restart cubly
 ```
 
 To get started with development, refer [here](https://docs.openmind.org/developer_cookbook/introduction)
