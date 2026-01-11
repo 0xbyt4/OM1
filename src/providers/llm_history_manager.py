@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import logging
+import threading
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, List, Optional, TypeVar, Union
 
@@ -84,6 +85,9 @@ class LLMHistoryManager:
 
         # history buffer
         self.history: List[ChatMessage] = []
+
+        # thread-safety lock for list modifications
+        self._lock = threading.Lock()
 
         # io provider
         self.io_provider = IOProvider()
@@ -235,29 +239,37 @@ class LLMHistoryManager:
                         return
 
                     summary_message = task.result()
-                    if summary_message.role == "assistant":
-                        del messages[:num_summarized]
-                        messages.insert(0, summary_message)
-                        logging.info("Successfully summarized the state")
-                    elif (
-                        summary_message.role == "system"
-                        and "Error" in summary_message.content
-                    ):
-                        logging.error(
-                            f"Summarization failed: {summary_message.content}"
-                        )
-                        messages.pop(0) if messages else None
-                        messages.pop(0) if messages else None
-                    else:
-                        logging.warning(f"Unexpected summary result: {summary_message}")
+                    with self._lock:
+                        if summary_message.role == "assistant":
+                            del messages[:num_summarized]
+                            messages.insert(0, summary_message)
+                            logging.info("Successfully summarized the state")
+                        elif (
+                            summary_message.role == "system"
+                            and "Error" in summary_message.content
+                        ):
+                            logging.error(
+                                f"Summarization failed: {summary_message.content}"
+                            )
+                            if len(messages) > 0:
+                                messages.pop(0)
+                            if len(messages) > 0:
+                                messages.pop(0)
+                        else:
+                            logging.warning(
+                                f"Unexpected summary result: {summary_message}"
+                            )
                 except asyncio.CancelledError:
                     logging.warning("Summary task callback cancelled")
                 except Exception as e:
                     logging.error(
                         f"Error in summary task callback: {type(e).__name__}: {e}"
                     )
-                    messages.pop(0) if messages else None
-                    messages.pop(0) if messages else None
+                    with self._lock:
+                        if len(messages) > 0:
+                            messages.pop(0)
+                        if len(messages) > 0:
+                            messages.pop(0)
 
             self._summary_task.add_done_callback(callback)
 
@@ -265,8 +277,11 @@ class LLMHistoryManager:
             logging.warning("Summary task creation cancelled")
         except Exception as e:
             logging.error(f"Error starting summary task: {type(e).__name__}: {e}")
-            messages.pop(0) if messages else None
-            messages.pop(0) if messages else None
+            with self._lock:
+                if len(messages) > 0:
+                    messages.pop(0)
+                if len(messages) > 0:
+                    messages.pop(0)
 
     def get_messages(self) -> List[dict]:
         """

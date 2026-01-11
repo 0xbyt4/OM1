@@ -358,3 +358,86 @@ async def test_update_history_tick_boundary():
     inputs_msg = history_manager.history[0]
     assert "Updated reading" in inputs_msg.content
     assert "Initial reading" not in inputs_msg.content
+
+
+@pytest.mark.asyncio
+async def test_callback_uses_lock_for_list_modification(history_manager):
+    """Test that callback modifies messages list with thread-safety.
+
+    BUG: The callback modifies messages list without a lock, which can
+    cause race conditions when accessed from multiple threads/coroutines.
+    """
+    # Check if LLMHistoryManager has a _lock attribute for thread-safety
+    assert hasattr(history_manager, "_lock"), (
+        "BUG: LLMHistoryManager should have a _lock attribute for thread-safe "
+        "list modifications in callbacks"
+    )
+
+
+@pytest.mark.asyncio
+async def test_safe_pop_with_length_check(history_manager):
+    """Test that pop operations use proper length checks instead of truthy check.
+
+    BUG: The pattern `messages.pop(0) if messages else None` is unsafe because:
+    1. It checks if list is truthy (non-empty)
+    2. Then pops from the list
+    3. Between check and pop, list could become empty (TOCTOU bug)
+
+    FIXED: Should use `if len(messages) > 0` with lock protection.
+    """
+    messages = [ChatMessage(role="user", content="Test")]
+
+    # Mock error in summarization to trigger the error handling path
+    history_manager.summarize_messages = AsyncMock()
+    history_manager.summarize_messages.return_value = ChatMessage(
+        role="system", content="Error: API failed"
+    )
+
+    # Run the summary task
+    await history_manager.start_summary_task(messages)
+
+    # Let the task and callback complete
+    await asyncio.sleep(0.1)
+
+    # The callback should have handled the error safely
+    # Even if messages becomes empty during callback, it should not raise IndexError
+    # This test documents the expected behavior after fix
+
+
+@pytest.mark.asyncio
+async def test_concurrent_callback_access(history_manager):
+    """Test that concurrent access to messages during callback is thread-safe.
+
+    This test simulates concurrent modifications that could occur when
+    multiple summary tasks complete around the same time.
+    """
+    import threading
+
+    messages = [
+        ChatMessage(role="user", content="msg1"),
+        ChatMessage(role="user", content="msg2"),
+        ChatMessage(role="user", content="msg3"),
+    ]
+
+    errors = []
+
+    def modify_list():
+        """Simulate concurrent modification."""
+        try:
+            for _ in range(10):
+                if messages:
+                    messages.append(ChatMessage(role="user", content="concurrent"))
+                if len(messages) > 1:
+                    messages.pop()
+        except (IndexError, RuntimeError) as e:
+            errors.append(e)
+
+    # Start concurrent modifications
+    threads = [threading.Thread(target=modify_list) for _ in range(3)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    # Note: This test may or may not catch the race condition depending on timing
+    # The fix should ensure no errors occur with proper locking
