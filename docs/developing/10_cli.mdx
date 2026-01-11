@@ -202,16 +202,23 @@ om1 restart <config_name> [OPTIONS]
 ```
 
 **Options:**
-- `--hot-reload-only`: Trigger config reload without full restart
+- `--hot-reload, -r`: Trigger hot-reload only (touch config file)
 - `--force, -f`: Force kill before restart
+- `--timeout, -t`: Seconds to wait for shutdown (default: 5)
 
 **Examples:**
 ```bash
 # Full restart
 om1 restart ollama
 
-# Just reload configuration
-om1 restart ollama --hot-reload-only
+# Just trigger hot-reload (no full restart)
+om1 restart ollama --hot-reload
+
+# Force kill then restart
+om1 restart ollama --force
+
+# Custom timeout
+om1 restart ollama --timeout 10
 ```
 
 ### Configuration Commands
@@ -221,7 +228,30 @@ om1 restart ollama --hot-reload-only
 List all available configuration files.
 
 ```bash
+om1 list [OPTIONS]
+```
+
+**Options:**
+- `--mode-aware, -m`: Show only mode-aware configurations
+- `--standard, -s`: Show only standard configurations
+- `--format, -f`: Output format: table, simple, json (default: table)
+
+**Examples:**
+```bash
+# List all configs (table format)
 om1 list
+
+# List only mode-aware configs
+om1 list --mode-aware
+
+# List only standard configs
+om1 list --standard
+
+# Output as JSON
+om1 list --format json
+
+# Simple list format
+om1 list --format simple
 ```
 
 **Output:**
@@ -250,12 +280,26 @@ Standard Configurations
 Show detailed information about a configuration.
 
 ```bash
-om1 info <config_name>
+om1 info <config_name> [OPTIONS]
 ```
 
-**Example:**
+**Options:**
+- `--json, -j`: Output as JSON
+- `--components, -c`: Show detailed component information
+
+**Examples:**
 ```bash
+# Show config info
 om1 info ollama
+
+# Output as JSON
+om1 info ollama --json
+
+# Show detailed components
+om1 info ollama --components
+
+# Mode-aware config info
+om1 info spot_modes
 ```
 
 #### `om1 validate`
