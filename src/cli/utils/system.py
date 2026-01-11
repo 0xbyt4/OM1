@@ -178,7 +178,7 @@ def check_env_file() -> CheckResult:
         name=".env File",
         status=CheckStatus.WARN,
         message="Not found",
-        fix_hint="Run: cp .env.example .env",
+        fix_hint="Run: cp env.example .env",
     )
 
 

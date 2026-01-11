@@ -194,14 +194,14 @@ def _install_dependencies(config_name: Optional[str], full: bool) -> None:
 def _setup_environment(config_name: Optional[str]) -> None:
     """Setup environment variables."""
     env_path = Path(".env")
-    env_example_path = Path(".env.example")
+    env_example_path = Path("env.example")
 
-    # Create .env.example if it doesn't exist
+    # Create env.example if it doesn't exist
     if not env_example_path.exists():
         from cli.commands.env import ENV_TEMPLATE
 
         env_example_path.write_text(ENV_TEMPLATE)
-        print_info("Created .env.example")
+        print_info("Created env.example")
 
     # Create .env if it doesn't exist
     if not env_path.exists():
