@@ -1,3 +1,5 @@
+"""Qwen LLM plugin for Alibaba Cloud Qwen models."""
+
 import json
 import logging
 import re

@@ -1,3 +1,5 @@
+"""RAG Multi LLM plugin (deprecated). Retrieval-augmented generation support."""
+
 # import logging
 # import time
 # import typing as T

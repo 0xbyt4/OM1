@@ -1,3 +1,5 @@
+"""OpenRouter LLM plugin for unified access to multiple LLM providers."""
+
 import logging
 import time
 import typing as T

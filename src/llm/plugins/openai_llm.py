@@ -1,3 +1,5 @@
+"""OpenAI LLM plugin for GPT models with function calling support."""
+
 import logging
 import time
 import typing as T

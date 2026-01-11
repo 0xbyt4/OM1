@@ -1,3 +1,5 @@
+"""Multi LLM Healthy plugin (deprecated). Use NearAI or OpenAI LLM plugins instead."""
+
 # Deprecated: Use NearAI or Open AI LLM plugins instead.
 
 # import logging

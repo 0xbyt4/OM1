@@ -1,3 +1,5 @@
+"""Ollama LLM plugin for local model inference."""
+
 import json
 import logging
 import time

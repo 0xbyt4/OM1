@@ -1,3 +1,5 @@
+"""NEAR AI LLM plugin for NEAR Protocol AI inference."""
+
 import logging
 import time
 import typing as T

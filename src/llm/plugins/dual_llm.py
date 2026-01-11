@@ -1,3 +1,5 @@
+"""Dual LLM plugin for parallel primary/secondary model inference."""
+
 import asyncio
 import json
 import logging

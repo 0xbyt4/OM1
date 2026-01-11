@@ -1,3 +1,5 @@
+"""OpenAI Spatial Memory LLM plugin (deprecated). Location-aware inference support."""
+
 # import json
 # import logging
 # import time

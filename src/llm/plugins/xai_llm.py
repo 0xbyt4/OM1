@@ -1,3 +1,5 @@
+"""xAI LLM plugin for Grok models using OpenAI-compatible API."""
+
 import logging
 import time
 import typing as T
