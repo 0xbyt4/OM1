@@ -583,9 +583,8 @@ class WebSim(Simulator):
 
                 try:
                     loop.run_until_complete(self.broadcast_state())
-                except RuntimeError as e:
-                    # Loop is already running, schedule as task instead
-                    logging.debug(f"Event loop already running, scheduling task: {e}")
+                except Exception as e:
+                    logging.warning(f"Websim tick error: {e}")
                     loop = asyncio.get_event_loop()
                     loop.create_task(self.broadcast_state())
 

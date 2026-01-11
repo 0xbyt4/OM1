@@ -244,7 +244,7 @@ Respond with ONLY a single word: either "A" or "B" for the better response."""
             result = content.strip().upper()
             return "local" if "A" in result else "cloud"
         except Exception as e:
-            logging.debug(f"LLM quality evaluation failed, defaulting to local: {e}")
+            logging.warning(f"LLM quality evaluation failed, defaulting to local: {e}")
             return "local"
 
     async def _select_best(
