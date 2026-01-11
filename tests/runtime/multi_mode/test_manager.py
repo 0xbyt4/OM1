@@ -1,3 +1,4 @@
+import asyncio
 import json
 import tempfile
 import time
@@ -976,18 +977,12 @@ class TestModeManager:
 
     @pytest.mark.asyncio
     async def test_concurrent_transitions_race_condition(self, mode_manager):
-        """Test that concurrent transition requests are handled safely without race condition.
-
-        This test verifies that the _is_transitioning flag is properly protected
-        by the lock, preventing race conditions when multiple transitions are
-        requested simultaneously.
-        """
-        import asyncio
+        """Test that concurrent transition requests are handled safely without race condition."""
 
         transition_results = []
         transition_count = 0
 
-        async def attempt_transition(target_mode, delay=0):
+        async def attempt_transition(target_mode, delay: float = 0):
             nonlocal transition_count
             if delay:
                 await asyncio.sleep(delay)
@@ -998,46 +993,34 @@ class TestModeManager:
             if result and mode_manager.state.current_mode == target_mode:
                 transition_count += 1
 
-        # Attempt multiple concurrent transitions
         await asyncio.gather(
             attempt_transition("advanced", 0),
             attempt_transition("emergency", 0.001),
             attempt_transition("advanced", 0.002),
         )
 
-        # Verify that transitions completed without errors
         assert len(transition_results) == 3
-
-        # Verify _is_transitioning flag is reset after all transitions
         assert mode_manager._is_transitioning is False
 
     @pytest.mark.asyncio
     async def test_transition_lock_prevents_concurrent_flag_modification(
         self, mode_manager
     ):
-        """Test that transition lock prevents concurrent modification of _is_transitioning flag.
-
-        This ensures the entire try/except/finally block is protected by the lock,
-        so _is_transitioning is always properly reset even if exceptions occur.
-        """
-        # Start a transition
+        """Test that transition lock prevents concurrent modification of _is_transitioning flag."""
         mode_manager._is_transitioning = False
 
         async def slow_transition():
             result = await mode_manager._execute_transition("advanced", "slow")
             return result
 
-        # Execute transition
         result = await slow_transition()
 
-        # Verify flag is properly reset
         assert mode_manager._is_transitioning is False
         assert result is True
 
     @pytest.mark.asyncio
     async def test_transition_flag_reset_on_exception(self, mode_manager):
         """Test that _is_transitioning flag is reset even when transition fails."""
-        # Force an exception by using invalid mode that passes initial check
         mode_manager.config.modes["broken"] = Mock()
         mode_manager.config.modes["broken"].execute_lifecycle_hooks = AsyncMock(
             side_effect=Exception("Hook failure")
@@ -1045,6 +1028,5 @@ class TestModeManager:
 
         result = await mode_manager._execute_transition("broken", "test")
 
-        # Flag should be reset even after exception
         assert mode_manager._is_transitioning is False
         assert result is False
