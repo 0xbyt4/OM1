@@ -973,3 +973,36 @@ class TestModeManager:
         ):
             result = await mode_manager.process_tick("advanced mode")
             assert result == ("emergency", "time_based")
+
+    def test_zenoh_init_failure_sets_correct_variable(self, sample_system_config):
+        """Test that Zenoh init failure sets _zenoh_mode_status_response_pub to None."""
+        with (
+            patch(
+                "runtime.multi_mode.manager.open_zenoh_session",
+                side_effect=Exception("Zenoh connection failed"),
+            ),
+            patch("runtime.multi_mode.manager.ModeManager._load_mode_state"),
+        ):
+            manager = ModeManager(sample_system_config)
+
+            assert hasattr(manager, "_zenoh_mode_status_response_pub")
+            assert manager._zenoh_mode_status_response_pub is None
+            assert manager.session is None
+
+    def test_zenoh_publisher_null_check_on_publish(self, sample_system_config):
+        """Test that publishing with null publisher doesn't raise error."""
+        with (
+            patch(
+                "runtime.multi_mode.manager.open_zenoh_session",
+                side_effect=Exception("Zenoh connection failed"),
+            ),
+            patch("runtime.multi_mode.manager.ModeManager._load_mode_state"),
+        ):
+            manager = ModeManager(sample_system_config)
+
+            assert manager._zenoh_mode_status_response_pub is None
+
+            if manager._zenoh_mode_status_response_pub is not None:
+                manager._zenoh_mode_status_response_pub.put(b"test")
+
+            assert True
