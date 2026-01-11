@@ -991,7 +991,9 @@ class TestModeManager:
             nonlocal transition_count
             if delay:
                 await asyncio.sleep(delay)
-            result = await mode_manager._execute_transition(target_mode, "concurrent_test")
+            result = await mode_manager._execute_transition(
+                target_mode, "concurrent_test"
+            )
             transition_results.append((target_mode, result))
             if result and mode_manager.state.current_mode == target_mode:
                 transition_count += 1
