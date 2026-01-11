@@ -161,7 +161,9 @@ class GalleryIdentitiesProvider:
                 snap = self._fetch_snapshot()
                 self._emit(snap.to_text())
             except Exception as e:
-                logging.warning(f"Failed to fetch/emit gallery identities snapshot: {e}")
+                logging.warning(
+                    f"Failed to fetch/emit gallery identities snapshot: {e}"
+                )
 
             next_t += self.period
             if next_t < time.time() - self.period:
