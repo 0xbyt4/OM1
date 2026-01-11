@@ -297,8 +297,11 @@ om1 validate spot --allow-missing
 Show detailed information about modes in a mode-aware configuration.
 
 ```bash
-om1 modes <config_name>
+om1 modes <config_name> [OPTIONS]
 ```
+
+**Options:**
+- `--json, -j`: Output as JSON
 
 **Output includes:**
 - Available modes with frequency, timeout, inputs/actions count
@@ -312,7 +315,14 @@ om1 modes spot_modes
 
 # Show modes for unitree config
 om1 modes unitree_go2_modes
+
+# Output as JSON
+om1 modes spot_modes --json
 ```
+
+**Error Handling:**
+- If config is not mode-aware, suggests using `om1 info` instead
+- If dependencies are missing, suggests installation command
 
 #### `om1 init`
 
@@ -323,7 +333,37 @@ om1 init <config_name> [OPTIONS]
 ```
 
 **Options:**
-- `--template, -t`: Template to use (minimal, standard, full)
+- `--template, -t`: Template to use (basic, conversation, robot, mode-aware)
+- `--display-name, -d`: Display name for the agent
+- `--force, -f`: Overwrite existing configuration
+- `--list-templates, -l`: List available templates
+
+**Available Templates:**
+- `basic`: Basic configuration with minimal setup
+- `conversation`: Conversation-focused configuration
+- `robot`: Robot configuration with sensors and actions
+- `mode-aware`: Multi-mode configuration with transitions
+
+**Examples:**
+```bash
+# Create basic config
+om1 init mybot
+
+# Create with specific template
+om1 init mybot --template robot
+
+# Create multi-mode config
+om1 init mybot --template mode-aware
+
+# Set display name
+om1 init mybot --display-name "My Robot"
+
+# List available templates
+om1 init --list-templates
+
+# Overwrite existing
+om1 init mybot --force
+```
 
 ### System Commands
 
@@ -434,25 +474,56 @@ om1 env validate
 Run tests using pytest.
 
 ```bash
-om1 test [OPTIONS]
+om1 test [path] [OPTIONS]
 ```
 
+**Arguments:**
+- `path`: Specific test file or directory (optional)
+
 **Options:**
-- `--path, -p`: Specific test path
-- `--coverage, -c`: Run with coverage
+- `--unit, -u`: Run only unit tests (tests/)
+- `--integration, -i`: Run only integration tests (tests_integration/)
+- `--all, -a`: Run all tests (unit + integration)
+- `--coverage, -c`: Run with coverage report
 - `--verbose, -v`: Verbose output
-- `--keyword, -k`: Filter by keyword
+- `--markers, -m`: Run tests matching marker expression (e.g., 'slow', 'not slow')
+- `--keyword, -k`: Run tests matching keyword expression
+- `--fail-fast, -x`: Stop on first failure
+- `--parallel, -p`: Run tests in parallel (requires pytest-xdist)
+- `--last-failed, --lf`: Run only last failed tests
+- `--lint, -l`: Run lint check before tests
 
 **Examples:**
 ```bash
-# Run all tests
+# Run unit tests (default)
 om1 test
 
-# Run specific tests
-om1 test --path tests/cli/
+# Run integration tests
+om1 test --integration
+
+# Run all tests
+om1 test --all
 
 # Run with coverage
 om1 test --coverage
+
+# Run specific directory
+om1 test tests/cli/
+
+# Run tests matching keyword
+om1 test -k "test_run"
+
+# Run tests with marker
+om1 test -m slow
+
+# Run lint before tests
+om1 test --lint
+
+# Stop on first failure
+om1 test --fail-fast
+
+# Run in parallel
+om1 test --parallel
 ```
 
 #### `om1 lint`
@@ -460,24 +531,45 @@ om1 test --coverage
 Run code quality checks using ruff and optionally pyright.
 
 ```bash
-om1 lint [OPTIONS]
+om1 lint [path] [OPTIONS]
 ```
 
+**Arguments:**
+- `path`: Specific file or directory to lint (defaults to src/)
+
 **Options:**
-- `--path, -p`: Path to lint
-- `--fix`: Auto-fix issues
-- `--type-check`: Include pyright type checking
+- `--fix, -f`: Automatically fix issues where possible
+- `--check, -c`: Only check, don't modify files (exit 1 if issues found)
+- `--format`: Also run code formatter (ruff format)
+- `--type-check, -t`: Also run type checker (pyright)
+- `--all, -a`: Run all checks: lint, format, type-check
+- `--verbose, -v`: Verbose output
 
 **Examples:**
 ```bash
-# Run lint
+# Check lint issues
 om1 lint
 
 # Auto-fix issues
 om1 lint --fix
 
+# Lint + format
+om1 lint --format
+
+# All checks (lint + format + type-check)
+om1 lint --all
+
+# Lint specific directory
+om1 lint src/cli/
+
+# Check mode (CI friendly)
+om1 lint --check
+
 # Include type checking
 om1 lint --type-check
+
+# Verbose output
+om1 lint --verbose
 ```
 
 ## Dependency Groups
