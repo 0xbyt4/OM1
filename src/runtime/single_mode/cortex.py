@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from typing import List, Optional, Union
+from typing import List, Optional, Set, Union
 
 import json5
 
@@ -14,6 +14,15 @@ from providers.io_provider import IOProvider
 from providers.sleep_ticker_provider import SleepTickerProvider
 from runtime.single_mode.config import RuntimeConfig, load_config
 from simulators.orchestrator import SimulatorOrchestrator
+
+# Fields that can be hot-reloaded without restarting orchestrators
+# These fields are read from config on each tick, so updating them takes effect immediately
+HOT_RELOAD_SAFE_FIELDS: Set[str] = {
+    "system_prompt_base",
+    "system_governance",
+    "system_prompt_examples",
+    "hertz",
+}
 
 
 class CortexRuntime:
@@ -243,9 +252,127 @@ class CortexRuntime:
                 logging.error(f"Error checking config changes: {e}")
                 await asyncio.sleep(5)
 
+    def _detect_config_changes(
+        self, old_config: RuntimeConfig, new_config: RuntimeConfig
+    ) -> Set[str]:
+        """
+        Detect which configuration fields have changed.
+
+        Parameters
+        ----------
+        old_config : RuntimeConfig
+            The current configuration.
+        new_config : RuntimeConfig
+            The new configuration to compare against.
+
+        Returns
+        -------
+        Set[str]
+            Set of field names that have changed.
+        """
+        changed_fields: Set[str] = set()
+
+        # Check simple fields that can be compared directly
+        simple_fields = [
+            "system_prompt_base",
+            "system_governance",
+            "system_prompt_examples",
+            "hertz",
+            "name",
+            "version",
+            "mode",
+            "api_key",
+            "robot_ip",
+            "URID",
+            "unitree_ethernet",
+            "action_execution_mode",
+        ]
+
+        for field in simple_fields:
+            old_value = getattr(old_config, field, None)
+            new_value = getattr(new_config, field, None)
+            if old_value != new_value:
+                changed_fields.add(field)
+                logging.debug(f"Config field '{field}' changed")
+
+        # Check complex fields (these require full reload if changed)
+        # We compare by checking if the serialized form would differ
+        complex_fields = [
+            "agent_inputs",
+            "agent_actions",
+            "simulators",
+            "backgrounds",
+            "action_dependencies",
+        ]
+
+        for field in complex_fields:
+            old_value = getattr(old_config, field, None)
+            new_value = getattr(new_config, field, None)
+            try:
+                # Simple length check first
+                if old_value is None and new_value is not None:
+                    changed_fields.add(field)
+                elif old_value is not None and new_value is None:
+                    changed_fields.add(field)
+                elif old_value is not None and new_value is not None:
+                    # Check if both are lists and compare lengths
+                    if hasattr(old_value, "__len__") and hasattr(new_value, "__len__"):
+                        if len(old_value) != len(new_value):
+                            changed_fields.add(field)
+                            logging.debug(
+                                f"Config field '{field}' changed (length differs)"
+                            )
+                    elif old_value is not new_value:
+                        # Different objects, assume changed
+                        changed_fields.add(field)
+            except (TypeError, AttributeError):
+                # If comparison fails, assume it changed to be safe
+                changed_fields.add(field)
+                logging.debug(
+                    f"Config field '{field}' comparison failed, assuming changed"
+                )
+
+        # LLM config is special - check if model or settings changed
+        try:
+            old_llm = getattr(old_config, "cortex_llm", None)
+            new_llm = getattr(new_config, "cortex_llm", None)
+            if old_llm is not new_llm:
+                # Different instances, assume changed
+                changed_fields.add("cortex_llm")
+                logging.debug("Config field 'cortex_llm' changed")
+        except AttributeError:
+            # If comparison fails, assume changed to trigger full reload
+            changed_fields.add("cortex_llm")
+
+        return changed_fields
+
+    def _apply_safe_config_updates(
+        self, new_config: RuntimeConfig, changed_fields: Set[str]
+    ) -> None:
+        """
+        Apply configuration updates for safe fields without restart.
+
+        Parameters
+        ----------
+        new_config : RuntimeConfig
+            The new configuration with updated values.
+        changed_fields : Set[str]
+            Set of field names that have changed.
+        """
+        for field in changed_fields:
+            if field in HOT_RELOAD_SAFE_FIELDS:
+                old_value = getattr(self.config, field, None)
+                new_value = getattr(new_config, field, None)
+                setattr(self.config, field, new_value)
+                logging.info(f"Hot-updated '{field}': {old_value!r} -> {new_value!r}")
+
     async def _reload_config(self) -> None:
         """
-        Reload the configuration and restart all components.
+        Reload the configuration with selective restart based on changed fields.
+
+        If only safe fields changed (system prompts, hertz), updates them without
+        restarting orchestrators. If unsafe fields changed (inputs, actions, LLM),
+        performs a full restart.
         """
         try:
             logging.info(f"Reloading configuration: {self.config_name}")
@@ -259,26 +386,59 @@ class CortexRuntime:
                 self.config_name, config_source_path=self.config_path
             )
 
-            await self._stop_current_orchestrators()
+            # Detect what changed
+            changed_fields = self._detect_config_changes(self.config, new_config)
 
-            self.config = new_config
+            if not changed_fields:
+                logging.info("No configuration changes detected")
+                return
 
-            self.fuser = Fuser(new_config)
-            self.action_orchestrator = ActionOrchestrator(new_config)
-            self.simulator_orchestrator = SimulatorOrchestrator(new_config)
-            self.background_orchestrator = BackgroundOrchestrator(new_config)
+            logging.info(f"Changed fields: {changed_fields}")
 
-            await self._start_orchestrators()
-
-            self.cortex_loop_task = asyncio.create_task(self._run_cortex_loop())
-
-            logging.info("Configuration reloaded successfully")
+            # Check if all changes are safe (no restart needed)
+            if changed_fields.issubset(HOT_RELOAD_SAFE_FIELDS):
+                # Safe update - just update the config values
+                self._apply_safe_config_updates(new_config, changed_fields)
+                logging.info(
+                    "Configuration hot-updated successfully (no restart required)"
+                )
+            else:
+                # Unsafe fields changed - full restart required
+                unsafe_fields = changed_fields - HOT_RELOAD_SAFE_FIELDS
+                logging.info(
+                    f"Full restart required due to changes in: {unsafe_fields}"
+                )
+                await self._full_reload(new_config)
 
         except Exception as e:
             logging.error(f"Failed to reload configuration: {e}")
             logging.error("Continuing with previous configuration")
         finally:
             self._is_reloading = False
+
+    async def _full_reload(self, new_config: RuntimeConfig) -> None:
+        """
+        Perform a full configuration reload with orchestrator restart.
+
+        Parameters
+        ----------
+        new_config : RuntimeConfig
+            The new configuration to apply.
+        """
+        await self._stop_current_orchestrators()
+
+        self.config = new_config
+
+        self.fuser = Fuser(new_config)
+        self.action_orchestrator = ActionOrchestrator(new_config)
+        self.simulator_orchestrator = SimulatorOrchestrator(new_config)
+        self.background_orchestrator = BackgroundOrchestrator(new_config)
+
+        await self._start_orchestrators()
+
+        self.cortex_loop_task = asyncio.create_task(self._run_cortex_loop())
+
+        logging.info("Configuration fully reloaded with orchestrator restart")
 
     async def _stop_current_orchestrators(self) -> None:
         """
