@@ -990,9 +990,9 @@ class TestModeManager:
             manager = ModeManager(sample_system_config)
 
             # After init failure, _zenoh_mode_status_response_pub should be None
-            assert hasattr(manager, "_zenoh_mode_status_response_pub"), (
-                "BUG: _zenoh_mode_status_response_pub attribute not set on init failure"
-            )
+            assert hasattr(
+                manager, "_zenoh_mode_status_response_pub"
+            ), "BUG: _zenoh_mode_status_response_pub attribute not set on init failure"
             assert manager._zenoh_mode_status_response_pub is None
             assert manager.session is None
 
