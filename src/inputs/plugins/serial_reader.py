@@ -136,11 +136,17 @@ class SerialReader(FuserInput[SensorConfig, Optional[str]]):
             return None
 
         if "Pulse:" in raw_input:
-            value = raw_input.split(" ")
-            message = f"The child's pulse rate is {value[1]}."
+            parts = raw_input.split(" ", 1)
+            if len(parts) > 1 and parts[1].strip():
+                message = f"The child's pulse rate is {parts[1].strip()}."
+            else:
+                message = "Pulse data received but value is missing."
         elif "Grip:" in raw_input:
-            value = raw_input.split(" ")
-            message = f"The child's grip strength is {value[1]}."
+            parts = raw_input.split(" ", 1)
+            if len(parts) > 1 and parts[1].strip():
+                message = f"The child's grip strength is {parts[1].strip()}."
+            else:
+                message = "Grip data received but value is missing."
         else:
             message = "No serial data."
 
