@@ -61,10 +61,191 @@ def test_load_rules_from_blockchain_failure(governance, mock_requests_post):
 # ------------------------
 
 
-# @pytest.mark.asyncio
-# @patch.object(GovernanceEthereum, "load_rules_from_blockchain", return_value=None)
-# async def test_poll_updates_rules(mock_blockchain, mock_api, governance):
-#     """Test `_poll()` updates rules properly."""
-#     await governance._poll()
-#     assert governance.universal_rule == governance.backup_universal_rule
-#     logging.info("Test `_poll()` correctly updated rules.")
+# -------------------------------
+# TEST: decode_eth_response
+# -------------------------------
+
+
+def test_decode_eth_response_valid_hex(governance):
+    """Test decode_eth_response with valid hex data."""
+    # This is a simplified valid hex response encoding "Hello"
+    # Structure: offset (32 bytes) + array length (32 bytes) + string offset (32 bytes) + string length (32 bytes) + string data
+    hex_response = (
+        "0x"
+        + "0000000000000000000000000000000000000000000000000000000000000020"  # offset
+        + "0000000000000000000000000000000000000000000000000000000000000001"  # array length
+        + "0000000000000000000000000000000000000000000000000000000000000020"  # string offset
+        + "0000000000000000000000000000000000000000000000000000000000000005"  # string length (5)
+        + "48656c6c6f000000000000000000000000000000000000000000000000000000"  # "Hello" padded
+    )
+    result = governance.decode_eth_response(hex_response)
+    assert result == "Hello"
+
+
+def test_decode_eth_response_without_0x_prefix(governance):
+    """Test decode_eth_response handles hex without 0x prefix."""
+    hex_response = (
+        "0000000000000000000000000000000000000000000000000000000000000020"
+        + "0000000000000000000000000000000000000000000000000000000000000001"
+        + "0000000000000000000000000000000000000000000000000000000000000020"
+        + "0000000000000000000000000000000000000000000000000000000000000005"
+        + "48656c6c6f000000000000000000000000000000000000000000000000000000"
+    )
+    result = governance.decode_eth_response(hex_response)
+    assert result == "Hello"
+
+
+def test_decode_eth_response_invalid_hex(governance):
+    """Test decode_eth_response with invalid hex returns None."""
+    result = governance.decode_eth_response("0xINVALIDHEX")
+    assert result is None
+
+
+def test_decode_eth_response_too_short(governance):
+    """Test decode_eth_response with too short data returns empty string."""
+    result = governance.decode_eth_response("0x1234")
+    # Short data results in empty string (string_length = 0 from insufficient bytes)
+    assert result == ""
+
+
+# ------------------------
+# TEST: Polling Behavior
+# ------------------------
+
+
+@pytest.mark.asyncio
+async def test_poll_returns_rules(mock_requests_post):
+    """Test _poll returns rules from blockchain."""
+    mock_requests_post.return_value.status_code = 200
+    mock_requests_post.return_value.json.return_value = {
+        "jsonrpc": "2.0",
+        "id": 636815446436324,
+        "result": (
+            "0x"
+            + "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0000000000000000000000000000000000000000000000000000000000000001"
+            + "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0000000000000000000000000000000000000000000000000000000000000009"
+            + "54657374526f6f74730000000000000000000000000000000000000000000000"
+        ),
+    }
+
+    governance = GovernanceEthereum(config=SensorConfig())
+    governance.POLL_INTERVAL = 0.01  # Speed up test
+
+    result = await governance._poll()
+    assert result is not None
+
+
+@pytest.mark.asyncio
+async def test_poll_handles_exception(mock_requests_post):
+    """Test _poll handles exceptions gracefully."""
+    mock_requests_post.side_effect = Exception("Network error")
+
+    governance = GovernanceEthereum(config=SensorConfig())
+    governance.POLL_INTERVAL = 0.01
+
+    result = await governance._poll()
+    assert result is None
+
+
+# ------------------------
+# TEST: _raw_to_text
+# ------------------------
+
+
+@pytest.mark.asyncio
+async def test_raw_to_text_with_valid_input(governance):
+    """Test _raw_to_text converts string to Message."""
+    result = await governance._raw_to_text("Test rule message")
+    assert result is not None
+    assert result.message == "Test rule message"
+    assert result.timestamp > 0
+
+
+@pytest.mark.asyncio
+async def test_raw_to_text_with_none_input(governance):
+    """Test _raw_to_text returns None for None input."""
+    result = await governance._raw_to_text(None)
+    assert result is None
+
+
+# ------------------------
+# TEST: raw_to_text (buffer)
+# ------------------------
+
+
+@pytest.mark.asyncio
+async def test_raw_to_text_adds_to_buffer(governance):
+    """Test raw_to_text adds message to buffer."""
+    governance.messages = []
+    await governance.raw_to_text("First rule")
+    assert len(governance.messages) == 1
+    assert governance.messages[0].message == "First rule"
+
+
+@pytest.mark.asyncio
+async def test_raw_to_text_deduplicates_same_message(governance):
+    """Test raw_to_text does not add duplicate consecutive messages."""
+    governance.messages = []
+    await governance.raw_to_text("Same rule")
+    await governance.raw_to_text("Same rule")
+    await governance.raw_to_text("Same rule")
+    assert len(governance.messages) == 1
+
+
+@pytest.mark.asyncio
+async def test_raw_to_text_adds_different_messages(governance):
+    """Test raw_to_text adds different messages."""
+    governance.messages = []
+    await governance.raw_to_text("Rule A")
+    await governance.raw_to_text("Rule B")
+    await governance.raw_to_text("Rule C")
+    assert len(governance.messages) == 3
+
+
+@pytest.mark.asyncio
+async def test_raw_to_text_ignores_none(governance):
+    """Test raw_to_text ignores None input."""
+    governance.messages = []
+    await governance.raw_to_text(None)
+    assert len(governance.messages) == 0
+
+
+# ------------------------
+# TEST: formatted_latest_buffer
+# ------------------------
+
+
+def test_formatted_latest_buffer_empty(governance):
+    """Test formatted_latest_buffer returns None for empty buffer."""
+    governance.messages = []
+    result = governance.formatted_latest_buffer()
+    assert result is None
+
+
+def test_formatted_latest_buffer_with_messages(governance):
+    """Test formatted_latest_buffer returns formatted output."""
+    from inputs.base import Message
+
+    governance.messages = [
+        Message(timestamp=1234567890.0, message="Test governance rule")
+    ]
+    result = governance.formatted_latest_buffer()
+
+    assert result is not None
+    assert "INPUT: Universal Laws" in result
+    assert "Test governance rule" in result
+    assert "// START" in result
+    assert "// END" in result
+
+
+def test_formatted_latest_buffer_does_not_clear_messages(governance):
+    """Test formatted_latest_buffer does NOT clear messages (by design)."""
+    from inputs.base import Message
+
+    governance.messages = [Message(timestamp=1234567890.0, message="Persistent rule")]
+    governance.formatted_latest_buffer()
+
+    # Messages should NOT be cleared (unlike other plugins)
+    assert len(governance.messages) == 1
