@@ -87,7 +87,8 @@ class FabricClosestPeer(FuserInput[FabricClosestPeerConfig, Optional[str]]):
                 logging.info(
                     f"FabricClosestPeer: fetching closest peer for {lat:.6f}, {lon:.6f}"
                 )
-                resp = requests.post(
+                resp = await asyncio.to_thread(
+                    requests.post,
                     self.fabric_endpoint,
                     json={
                         "method": "omp2p_findClosestPeer",
