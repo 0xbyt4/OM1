@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 from typing import Optional
@@ -139,7 +140,8 @@ class DIMOTeslaConnector(ActionConnector[DIMOTeslaConfig, TeslaInput]):
             if self.vehicle_jwt is not None:
                 if output_interface.action == "lock doors":
                     url = f"{self.base_url}/{self.token_id}/commands/doors/lock"
-                    response = requests.post(
+                    response = await asyncio.to_thread(
+                        requests.post,
                         url,
                         headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
                         timeout=10,
@@ -152,7 +154,8 @@ class DIMOTeslaConnector(ActionConnector[DIMOTeslaConfig, TeslaInput]):
                         )
                 elif output_interface.action == "unlock doors":
                     url = f"{self.base_url}/{self.token_id}/commands/doors/unlock"
-                    response = requests.post(
+                    response = await asyncio.to_thread(
+                        requests.post,
                         url,
                         headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
                         timeout=10,
@@ -165,7 +168,8 @@ class DIMOTeslaConnector(ActionConnector[DIMOTeslaConfig, TeslaInput]):
                         )
                 elif output_interface.action == "open frunk":
                     url = f"{self.base_url}/{self.token_id}/commands/frunk/open"
-                    response = requests.post(
+                    response = await asyncio.to_thread(
+                        requests.post,
                         url,
                         headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
                         timeout=10,
@@ -178,7 +182,8 @@ class DIMOTeslaConnector(ActionConnector[DIMOTeslaConfig, TeslaInput]):
                         )
                 elif output_interface.action == "open trunk":
                     url = f"{self.base_url}/{self.token_id}/commands/trunk/open"
-                    response = requests.post(
+                    response = await asyncio.to_thread(
+                        requests.post,
                         url,
                         headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
                         timeout=10,
