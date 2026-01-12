@@ -41,12 +41,16 @@ class TestTelegramAPIConnectorInit:
 
     def test_init_with_credentials(self):
         """Test initialization with credentials."""
-        with patch.dict(
-            "os.environ",
-            {
-                "TELEGRAM_BOT_TOKEN": "test-bot-token",
-                "TELEGRAM_CHAT_ID": "test-chat-id",
-            },
+        with (
+            patch("actions.telegram_message.connector.telegramAPI.load_dotenv"),
+            patch.dict(
+                "os.environ",
+                {
+                    "TELEGRAM_BOT_TOKEN": "test-bot-token",
+                    "TELEGRAM_CHAT_ID": "test-chat-id",
+                },
+                clear=True,
+            ),
         ):
             config = ActionConfig(name="telegram_message")
             connector = TelegramAPIConnector(config)
@@ -55,39 +59,46 @@ class TestTelegramAPIConnectorInit:
 
     def test_init_without_bot_token(self):
         """Test initialization without bot token logs warning."""
-        with patch.dict("os.environ", {"TELEGRAM_CHAT_ID": "test-chat-id"}, clear=True):
-            config = ActionConfig(name="telegram_message")
-            with patch(
+        with (
+            patch("actions.telegram_message.connector.telegramAPI.load_dotenv"),
+            patch.dict("os.environ", {"TELEGRAM_CHAT_ID": "test-chat-id"}, clear=True),
+            patch(
                 "actions.telegram_message.connector.telegramAPI.logging.warning"
-            ) as mock_warning:
-                connector = TelegramAPIConnector(config)
-                assert connector.bot_token is None
-                mock_warning.assert_any_call(
-                    "TELEGRAM_BOT_TOKEN not set in environment"
-                )
+            ) as mock_warning,
+        ):
+            config = ActionConfig(name="telegram_message")
+            connector = TelegramAPIConnector(config)
+            assert connector.bot_token is None
+            mock_warning.assert_any_call("TELEGRAM_BOT_TOKEN not set in environment")
 
     def test_init_without_chat_id(self):
         """Test initialization without chat id logs warning."""
-        with patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "test-token"}, clear=True):
-            config = ActionConfig(name="telegram_message")
-            with patch(
+        with (
+            patch("actions.telegram_message.connector.telegramAPI.load_dotenv"),
+            patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "test-token"}, clear=True),
+            patch(
                 "actions.telegram_message.connector.telegramAPI.logging.warning"
-            ) as mock_warning:
-                connector = TelegramAPIConnector(config)
-                assert connector.chat_id is None
-                mock_warning.assert_any_call("TELEGRAM_CHAT_ID not set in environment")
+            ) as mock_warning,
+        ):
+            config = ActionConfig(name="telegram_message")
+            connector = TelegramAPIConnector(config)
+            assert connector.chat_id is None
+            mock_warning.assert_any_call("TELEGRAM_CHAT_ID not set in environment")
 
     def test_init_without_any_credentials(self):
         """Test initialization without any credentials logs both warnings."""
-        with patch.dict("os.environ", {}, clear=True):
-            config = ActionConfig(name="telegram_message")
-            with patch(
+        with (
+            patch("actions.telegram_message.connector.telegramAPI.load_dotenv"),
+            patch.dict("os.environ", {}, clear=True),
+            patch(
                 "actions.telegram_message.connector.telegramAPI.logging.warning"
-            ) as mock_warning:
-                connector = TelegramAPIConnector(config)
-                assert connector.bot_token is None
-                assert connector.chat_id is None
-                assert mock_warning.call_count >= 2
+            ) as mock_warning,
+        ):
+            config = ActionConfig(name="telegram_message")
+            connector = TelegramAPIConnector(config)
+            assert connector.bot_token is None
+            assert connector.chat_id is None
+            assert mock_warning.call_count >= 2
 
 
 class TestTelegramAPIConnectorConnect:
@@ -96,12 +107,16 @@ class TestTelegramAPIConnectorConnect:
     @pytest.fixture
     def connector_with_credentials(self):
         """Create a connector with mocked credentials."""
-        with patch.dict(
-            "os.environ",
-            {
-                "TELEGRAM_BOT_TOKEN": "test-bot-token",
-                "TELEGRAM_CHAT_ID": "123456789",
-            },
+        with (
+            patch("actions.telegram_message.connector.telegramAPI.load_dotenv"),
+            patch.dict(
+                "os.environ",
+                {
+                    "TELEGRAM_BOT_TOKEN": "test-bot-token",
+                    "TELEGRAM_CHAT_ID": "123456789",
+                },
+                clear=True,
+            ),
         ):
             config = ActionConfig(name="telegram_message")
             return TelegramAPIConnector(config)
@@ -109,7 +124,10 @@ class TestTelegramAPIConnectorConnect:
     @pytest.mark.asyncio
     async def test_connect_without_credentials_returns_early(self):
         """Test that connect returns early without credentials."""
-        with patch.dict("os.environ", {}, clear=True):
+        with (
+            patch("actions.telegram_message.connector.telegramAPI.load_dotenv"),
+            patch.dict("os.environ", {}, clear=True),
+        ):
             config = ActionConfig(name="telegram_message")
             connector = TelegramAPIConnector(config)
 
@@ -126,7 +144,6 @@ class TestTelegramAPIConnectorConnect:
         with patch(
             "actions.telegram_message.connector.telegramAPI.aiohttp.ClientSession"
         ) as mock_session:
-            # Setup mock response
             mock_response = AsyncMock()
             mock_response.status = 200
             mock_response.json = AsyncMock(
@@ -181,7 +198,6 @@ class TestTelegramAPIConnectorConnect:
             input_obj = TelegramMessageInput(action="Test")
             await connector_with_credentials.connect(input_obj)
 
-            # Verify post was called with correct URL
             mock_session_instance.post.assert_called_once()
             call_args = mock_session_instance.post.call_args
             assert "api.telegram.org" in call_args[0][0]
@@ -204,12 +220,16 @@ class TestActionLoading:
             "connector": "telegramAPI",
         }
 
-        with patch.dict(
-            "os.environ",
-            {
-                "TELEGRAM_BOT_TOKEN": "test-token",
-                "TELEGRAM_CHAT_ID": "test-chat",
-            },
+        with (
+            patch("actions.telegram_message.connector.telegramAPI.load_dotenv"),
+            patch.dict(
+                "os.environ",
+                {
+                    "TELEGRAM_BOT_TOKEN": "test-token",
+                    "TELEGRAM_CHAT_ID": "test-chat",
+                },
+                clear=True,
+            ),
         ):
             action = load_action(config)
             assert action.name == "telegram_message"
