@@ -6,11 +6,7 @@ import pytest
 
 from llm import LLMConfig
 from llm.output_model import Action, CortexOutputModel
-from llm.plugins.groq_llm import (
-    DEFAULT_GROQ_BASE_URL,
-    DEFAULT_GROQ_MODEL,
-    GroqLLM,
-)
+from llm.plugins.groq_llm import GroqLLM
 
 
 @pytest.fixture(autouse=True)
@@ -39,18 +35,6 @@ def mock_decorators():
         yield
 
 
-class TestGroqLLMConfig:
-    """Tests for GroqLLM configuration."""
-
-    def test_default_model(self):
-        """Test that default model is llama-3.3-70b-versatile."""
-        assert DEFAULT_GROQ_MODEL == "llama-3.3-70b-versatile"
-
-    def test_default_base_url(self):
-        """Test that default base URL is Groq API."""
-        assert DEFAULT_GROQ_BASE_URL == "https://api.groq.com/openai/v1"
-
-
 class TestGroqLLMInit:
     """Tests for GroqLLM initialization."""
 
@@ -70,10 +54,10 @@ class TestGroqLLMInit:
             llm = GroqLLM(config)
 
             mock_client.assert_called_once_with(
-                base_url=DEFAULT_GROQ_BASE_URL,
+                base_url="https://api.openmind.org/api/core/groq",
                 api_key="test-api-key",
             )
-            assert llm._config.model == DEFAULT_GROQ_MODEL
+            assert llm._config.model == "llama-3.3-70b-versatile"
 
     def test_init_with_custom_model(self):
         """Test that custom model is preserved."""
@@ -86,7 +70,7 @@ class TestGroqLLMInit:
 
     def test_init_with_custom_base_url(self):
         """Test that custom base_url is used."""
-        custom_url = "https://api.openmind.org/api/core/groq"
+        custom_url = "https://api.groq.com/openai/v1"
         config = LLMConfig(api_key="test-api-key", base_url=custom_url)
 
         with patch("llm.plugins.groq_llm.openai.AsyncOpenAI") as mock_client:

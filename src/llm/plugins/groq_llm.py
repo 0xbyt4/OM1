@@ -15,10 +15,6 @@ from providers.llm_history_manager import LLMHistoryManager
 
 R = T.TypeVar("R", bound=BaseModel)
 
-# Groq default configuration
-DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
-DEFAULT_GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-
 
 class GroqLLM(LLM[R]):
     """
@@ -41,37 +37,6 @@ class GroqLLM(LLM[R]):
     available_actions : list[AgentAction], optional
         List of available actions for function call generation. If provided,
         the LLM will use function calls instead of structured JSON output.
-
-    Examples
-    --------
-    Configuration in JSON5:
-    ```json5
-    {
-        "cortex_llm": {
-            "type": "GroqLLM",
-            "config": {
-                "api_key": "your-groq-api-key",
-                "model": "llama-3.3-70b-versatile",
-                "agent_name": "MyRobot",
-                "history_length": 3
-            }
-        }
-    }
-    ```
-
-    For OpenMind proxy access (when available):
-    ```json5
-    {
-        "cortex_llm": {
-            "type": "GroqLLM",
-            "config": {
-                "api_key": "openmind_free",
-                "base_url": "https://api.openmind.org/api/core/groq",
-                "model": "llama-3.3-70b-versatile"
-            }
-        }
-    }
-    ```
     """
 
     def __init__(
@@ -88,22 +53,16 @@ class GroqLLM(LLM[R]):
             Configuration settings for the LLM.
         available_actions : list[AgentAction], optional
             List of available actions for function calling.
-
-        Raises
-        ------
-        ValueError
-            If api_key is not provided in config.
         """
         super().__init__(config, available_actions)
 
         if not config.api_key:
-            raise ValueError("config file missing api_key for Groq")
-
+            raise ValueError("config file missing api_key")
         if not config.model:
-            self._config.model = DEFAULT_GROQ_MODEL
+            self._config.model = "llama-3.3-70b-versatile"
 
         self._client = openai.AsyncOpenAI(
-            base_url=config.base_url or DEFAULT_GROQ_BASE_URL,
+            base_url=config.base_url or "https://api.openmind.org/api/core/groq",
             api_key=config.api_key,
         )
 
@@ -129,12 +88,6 @@ class GroqLLM(LLM[R]):
         R or None
             Parsed response matching the output_model structure, or None if
             parsing fails or an error occurs.
-
-        Notes
-        -----
-        This method supports Groq's function calling capability. When
-        available_actions are provided, the model will use tool calls
-        to determine actions.
         """
         try:
             logging.debug(f"Groq LLM input: {prompt}")
@@ -150,7 +103,7 @@ class GroqLLM(LLM[R]):
             formatted_messages.append({"role": "user", "content": prompt})
 
             response = await self._client.chat.completions.create(
-                model=self._config.model or DEFAULT_GROQ_MODEL,
+                model=self._config.model or "llama-3.3-70b-versatile",
                 messages=T.cast(T.Any, formatted_messages),
                 tools=T.cast(T.Any, self.function_schemas),
                 tool_choice="auto",
@@ -161,8 +114,8 @@ class GroqLLM(LLM[R]):
             self.io_provider.llm_end_time = time.time()
 
             if message.tool_calls:
-                logging.info(f"Groq received {len(message.tool_calls)} function calls")
-                logging.debug(f"Groq function calls: {message.tool_calls}")
+                logging.info(f"Received {len(message.tool_calls)} function calls")
+                logging.info(f"Function calls: {message.tool_calls}")
 
                 function_call_data = [
                     {
@@ -180,15 +133,6 @@ class GroqLLM(LLM[R]):
                 logging.info(f"Groq LLM function call output: {result}")
                 return T.cast(R, result)
 
-            return None
-        except openai.APIConnectionError as e:
-            logging.error(f"Groq API connection error: {e}")
-            return None
-        except openai.RateLimitError as e:
-            logging.error(f"Groq API rate limit exceeded: {e}")
-            return None
-        except openai.APIStatusError as e:
-            logging.error(f"Groq API status error: {e.status_code} - {e.message}")
             return None
         except Exception as e:
             logging.error(f"Groq API error: {e}")
