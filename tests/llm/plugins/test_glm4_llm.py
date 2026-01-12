@@ -10,28 +10,43 @@ from llm.plugins.glm4_llm import GLM4LLM
 
 
 @pytest.fixture(autouse=True)
-def mock_decorators():
-    """Mock decorators used in GLM4LLM."""
+def mock_avatar_components():
+    """Mock all avatar and IO components to prevent Zenoh session creation."""
 
-    def passthrough_decorator(*args, **kwargs):
-        def decorator(func):
-            return func
+    def mock_decorator(func=None):
+        def decorator(f):
+            return f
 
-        if len(args) == 1 and callable(args[0]):
-            return args[0]
+        if func is not None:
+            return decorator(func)
         return decorator
 
     with (
         patch(
             "llm.plugins.glm4_llm.AvatarLLMState.trigger_thinking",
-            passthrough_decorator,
+            mock_decorator,
         ),
         patch(
             "llm.plugins.glm4_llm.LLMHistoryManager.update_history",
-            passthrough_decorator,
+            mock_decorator,
         ),
         patch("llm.plugins.glm4_llm.LLMHistoryManager"),
+        patch("llm.plugins.glm4_llm.AvatarLLMState") as mock_avatar_state,
+        patch("providers.avatar_provider.AvatarProvider") as mock_avatar_provider,
+        patch(
+            "providers.avatar_llm_state_provider.AvatarProvider"
+        ) as mock_avatar_llm_state_provider,
     ):
+        mock_avatar_state._instance = None
+        mock_avatar_state._lock = None
+
+        mock_provider_instance = MagicMock()
+        mock_provider_instance.running = False
+        mock_provider_instance.session = None
+        mock_provider_instance.stop = MagicMock()
+        mock_avatar_provider.return_value = mock_provider_instance
+        mock_avatar_llm_state_provider.return_value = mock_provider_instance
+
         yield
 
 
