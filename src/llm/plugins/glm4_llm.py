@@ -57,6 +57,7 @@ class GLM4LLM(LLM[R]):
             api_key=config.api_key,
         )
 
+        # Initialize history manager
         self.history_manager = LLMHistoryManager(self._config, self._client)
 
     @AvatarLLMState.trigger_thinking()
