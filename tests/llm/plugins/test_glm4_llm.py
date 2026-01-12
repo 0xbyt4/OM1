@@ -6,11 +6,7 @@ import pytest
 
 from llm import LLMConfig
 from llm.output_model import Action, CortexOutputModel
-from llm.plugins.glm4_llm import (
-    DEFAULT_GLM4_BASE_URL,
-    DEFAULT_GLM4_MODEL,
-    GLM4LLM,
-)
+from llm.plugins.glm4_llm import GLM4LLM
 
 
 @pytest.fixture(autouse=True)
@@ -39,18 +35,6 @@ def mock_decorators():
         yield
 
 
-class TestGLM4LLMConfig:
-    """Tests for GLM4LLM configuration."""
-
-    def test_default_model(self):
-        """Test that default model is glm-4.7."""
-        assert DEFAULT_GLM4_MODEL == "glm-4.7"
-
-    def test_default_base_url(self):
-        """Test that default base URL is OpenMind proxy."""
-        assert DEFAULT_GLM4_BASE_URL == "https://api.openmind.org/api/core/glm4"
-
-
 class TestGLM4LLMInit:
     """Tests for GLM4LLM initialization."""
 
@@ -70,23 +54,23 @@ class TestGLM4LLMInit:
             llm = GLM4LLM(config)
 
             mock_client.assert_called_once_with(
-                base_url=DEFAULT_GLM4_BASE_URL,
+                base_url="https://api.openmind.org/api/core/glm4",
                 api_key="test-api-key",
             )
-            assert llm._config.model == DEFAULT_GLM4_MODEL
+            assert llm._config.model == "glm-4-flash"
 
     def test_init_with_custom_model(self):
         """Test that custom model is preserved."""
-        config = LLMConfig(api_key="test-api-key", model="glm-4-flash")
+        config = LLMConfig(api_key="test-api-key", model="glm-4-plus")
 
         with patch("llm.plugins.glm4_llm.openai.AsyncOpenAI"):
             llm = GLM4LLM(config)
 
-            assert llm._config.model == "glm-4-flash"
+            assert llm._config.model == "glm-4-plus"
 
     def test_init_with_custom_base_url(self):
         """Test that custom base_url is used."""
-        custom_url = "https://custom.api.example.com/v1/"
+        custom_url = "https://open.bigmodel.cn/api/paas/v4/"
         config = LLMConfig(api_key="test-api-key", base_url=custom_url)
 
         with patch("llm.plugins.glm4_llm.openai.AsyncOpenAI") as mock_client:
@@ -183,7 +167,7 @@ class TestGLM4LLMAsk:
 
         glm4_llm._client.chat.completions.create.assert_called_once()
         call_args = glm4_llm._client.chat.completions.create.call_args
-        assert call_args.kwargs["model"] == "glm-4.7"
+        assert call_args.kwargs["model"] == "glm-4-flash"
         assert "messages" in call_args.kwargs
 
     @pytest.mark.asyncio
