@@ -4,7 +4,7 @@ from actions.base import Interface
 
 
 @dataclass
-class TelegramMessageInput:
+class TelegramInput:
     """
     Input interface for the Telegram Message action.
 
@@ -19,7 +19,7 @@ class TelegramMessageInput:
 
 
 @dataclass
-class TelegramMessage(Interface[TelegramMessageInput, TelegramMessageInput]):
+class Telegram(Interface[TelegramInput, TelegramInput]):
     """
     This action allows the robot to send messages to Telegram.
 
@@ -28,5 +28,5 @@ class TelegramMessage(Interface[TelegramMessageInput, TelegramMessageInput]):
     and logged upon successful delivery.
     """
 
-    input: TelegramMessageInput
-    output: TelegramMessageInput
+    input: TelegramInput
+    output: TelegramInput

@@ -1,51 +1,54 @@
 import logging
-import os
 
 import aiohttp
-from dotenv import load_dotenv
+from pydantic import Field
 
 from actions.base import ActionConfig, ActionConnector
-from actions.telegram_message.interface import TelegramMessageInput
+from actions.telegram.interface import TelegramInput
 
 
-class TelegramAPIConnector(ActionConnector[ActionConfig, TelegramMessageInput]):
+class TelegramAPIConfig(ActionConfig):
+    """
+    Configuration class for TelegramAPIConnector.
+    """
+
+    bot_token: str = Field(description="Telegram Bot Token for authentication")
+    chat_id: str = Field(description="Telegram Chat ID to send messages to")
+
+
+class TelegramAPIConnector(ActionConnector[TelegramAPIConfig, TelegramInput]):
     """
     Connector for Telegram Bot API.
 
     This connector integrates with Telegram Bot API to send messages from the robot.
     """
 
-    def __init__(self, config: ActionConfig):
+    def __init__(self, config: TelegramAPIConfig):
         """
         Initialize the Telegram API connector.
 
         Parameters
         ----------
         config : ActionConfig
-            Configuration for the action connector.
+            Configuration object for the connector.
         """
         super().__init__(config)
 
-        load_dotenv()
+        if not self.config.bot_token:
+            logging.warning("Telegram Bot Token not provided in configuration")
+        if not self.config.chat_id:
+            logging.warning("Telegram Chat ID not provided in configuration")
 
-        self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-        self.chat_id = os.getenv("TELEGRAM_CHAT_ID")
-
-        if not self.bot_token:
-            logging.warning("TELEGRAM_BOT_TOKEN not set in environment")
-        if not self.chat_id:
-            logging.warning("TELEGRAM_CHAT_ID not set in environment")
-
-    async def connect(self, output_interface: TelegramMessageInput) -> None:
+    async def connect(self, output_interface: TelegramInput) -> None:
         """
         Send message via Telegram Bot API.
 
         Parameters
         ----------
-        output_interface : TelegramMessageInput
-            The TelegramMessageInput interface containing the message text.
+        output_interface : TelegramInput
+            The TelegramInput interface containing the message text.
         """
-        if not self.bot_token or not self.chat_id:
+        if not self.config.bot_token or not self.config.chat_id:
             logging.error("Telegram credentials not configured")
             return
 
@@ -53,9 +56,9 @@ class TelegramAPIConnector(ActionConnector[ActionConfig, TelegramMessageInput]):
             message_text = output_interface.action
             logging.info(f"SendThisToTelegram: {message_text}")
 
-            url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+            url = f"https://api.telegram.org/bot{self.config.bot_token}/sendMessage"
             payload = {
-                "chat_id": self.chat_id,
+                "chat_id": self.config.chat_id,
                 "text": message_text,
                 "parse_mode": "HTML",
             }
