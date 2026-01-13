@@ -1,7 +1,7 @@
 # tests/actions/dimo/test_tesla_async.py
 
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -45,54 +45,93 @@ class TestDIMOTeslaAsyncBehavior:
                 connector.token_id = 12345
                 return connector
 
-    @pytest.mark.asyncio
-    async def test_connect_lock_doors_uses_asyncio_to_thread(self, connector):
-        """connect() lock doors should use asyncio.to_thread for non-blocking HTTP."""
-        with patch("actions.dimo.connector.tesla.asyncio.to_thread") as mock_to_thread:
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            mock_to_thread.return_value = mock_response
+    def create_aiohttp_mocks(self, status=200):
+        """Create properly configured aiohttp mocks."""
+        mock_response = MagicMock()
+        mock_response.status = status
+        mock_response.text = AsyncMock(return_value="OK")
 
+        mock_post_cm = MagicMock()
+        mock_post_cm.__aenter__ = AsyncMock(return_value=mock_response)
+        mock_post_cm.__aexit__ = AsyncMock(return_value=None)
+
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_post_cm)
+
+        mock_session_cm = MagicMock()
+        mock_session_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_cm.__aexit__ = AsyncMock(return_value=None)
+
+        return mock_session_cm, mock_session
+
+    @pytest.mark.asyncio
+    async def test_connect_lock_doors_uses_aiohttp(self, connector):
+        """connect() lock doors should use aiohttp for non-blocking HTTP."""
+        mock_session_cm, mock_session = self.create_aiohttp_mocks()
+
+        with (
+            patch("actions.dimo.connector.tesla.aiohttp.ClientTimeout"),
+            patch(
+                "actions.dimo.connector.tesla.aiohttp.ClientSession",
+                return_value=mock_session_cm,
+            ),
+        ):
             output = TeslaInput(action="lock doors")
             await connector.connect(output)
 
-            assert mock_to_thread.called
+            mock_session.post.assert_called_once()
+            assert "doors/lock" in mock_session.post.call_args[0][0]
 
     @pytest.mark.asyncio
-    async def test_connect_unlock_doors_uses_asyncio_to_thread(self, connector):
-        """connect() unlock doors should use asyncio.to_thread for non-blocking HTTP."""
-        with patch("actions.dimo.connector.tesla.asyncio.to_thread") as mock_to_thread:
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            mock_to_thread.return_value = mock_response
+    async def test_connect_unlock_doors_uses_aiohttp(self, connector):
+        """connect() unlock doors should use aiohttp for non-blocking HTTP."""
+        mock_session_cm, mock_session = self.create_aiohttp_mocks()
 
+        with (
+            patch("actions.dimo.connector.tesla.aiohttp.ClientTimeout"),
+            patch(
+                "actions.dimo.connector.tesla.aiohttp.ClientSession",
+                return_value=mock_session_cm,
+            ),
+        ):
             output = TeslaInput(action="unlock doors")
             await connector.connect(output)
 
-            assert mock_to_thread.called
+            mock_session.post.assert_called_once()
+            assert "doors/unlock" in mock_session.post.call_args[0][0]
 
     @pytest.mark.asyncio
-    async def test_connect_open_frunk_uses_asyncio_to_thread(self, connector):
-        """connect() open frunk should use asyncio.to_thread for non-blocking HTTP."""
-        with patch("actions.dimo.connector.tesla.asyncio.to_thread") as mock_to_thread:
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            mock_to_thread.return_value = mock_response
+    async def test_connect_open_frunk_uses_aiohttp(self, connector):
+        """connect() open frunk should use aiohttp for non-blocking HTTP."""
+        mock_session_cm, mock_session = self.create_aiohttp_mocks()
 
+        with (
+            patch("actions.dimo.connector.tesla.aiohttp.ClientTimeout"),
+            patch(
+                "actions.dimo.connector.tesla.aiohttp.ClientSession",
+                return_value=mock_session_cm,
+            ),
+        ):
             output = TeslaInput(action="open frunk")
             await connector.connect(output)
 
-            assert mock_to_thread.called
+            mock_session.post.assert_called_once()
+            assert "frunk/open" in mock_session.post.call_args[0][0]
 
     @pytest.mark.asyncio
-    async def test_connect_open_trunk_uses_asyncio_to_thread(self, connector):
-        """connect() open trunk should use asyncio.to_thread for non-blocking HTTP."""
-        with patch("actions.dimo.connector.tesla.asyncio.to_thread") as mock_to_thread:
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            mock_to_thread.return_value = mock_response
+    async def test_connect_open_trunk_uses_aiohttp(self, connector):
+        """connect() open trunk should use aiohttp for non-blocking HTTP."""
+        mock_session_cm, mock_session = self.create_aiohttp_mocks()
 
+        with (
+            patch("actions.dimo.connector.tesla.aiohttp.ClientTimeout"),
+            patch(
+                "actions.dimo.connector.tesla.aiohttp.ClientSession",
+                return_value=mock_session_cm,
+            ),
+        ):
             output = TeslaInput(action="open trunk")
             await connector.connect(output)
 
-            assert mock_to_thread.called
+            mock_session.post.assert_called_once()
+            assert "trunk/open" in mock_session.post.call_args[0][0]

@@ -1,9 +1,8 @@
-import asyncio
 import logging
 import time
 from typing import Optional
 
-import requests
+import aiohttp
 from dimo import DIMO
 from pydantic import Field
 
@@ -138,64 +137,70 @@ class DIMOTeslaConnector(ActionConnector[DIMOTeslaConfig, TeslaInput]):
                     return None
 
             if self.vehicle_jwt is not None:
-                if output_interface.action == "lock doors":
-                    url = f"{self.base_url}/{self.token_id}/commands/doors/lock"
-                    response = await asyncio.to_thread(
-                        requests.post,
-                        url,
-                        headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
-                        timeout=10,
-                    )
-                    if response.status_code == 200:
-                        logging.info("DIMO Tesla: Door locked")
-                    else:
-                        logging.error(
-                            f"Error locking door: {response.status_code} {response.text}"
-                        )
-                elif output_interface.action == "unlock doors":
-                    url = f"{self.base_url}/{self.token_id}/commands/doors/unlock"
-                    response = await asyncio.to_thread(
-                        requests.post,
-                        url,
-                        headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
-                        timeout=10,
-                    )
-                    if response.status_code == 200:
-                        logging.info("DIMO Tesla: Door unlocked")
-                    else:
-                        logging.error(
-                            f"Error unlocking door: {response.status_code} {response.text}"
-                        )
-                elif output_interface.action == "open frunk":
-                    url = f"{self.base_url}/{self.token_id}/commands/frunk/open"
-                    response = await asyncio.to_thread(
-                        requests.post,
-                        url,
-                        headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
-                        timeout=10,
-                    )
-                    if response.status_code == 200:
-                        logging.info("DIMO Tesla: Frunk opened")
-                    else:
-                        logging.error(
-                            f"Error opening frunk: {response.status_code} {response.text}"
-                        )
-                elif output_interface.action == "open trunk":
-                    url = f"{self.base_url}/{self.token_id}/commands/trunk/open"
-                    response = await asyncio.to_thread(
-                        requests.post,
-                        url,
-                        headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
-                        timeout=10,
-                    )
-                    if response.status_code == 200:
-                        logging.info("DIMO Tesla: Trunk opened")
-                    else:
-                        logging.error(
-                            f"Error opening trunk: {response.status_code} {response.text}"
-                        )
-                elif output_interface.action == "idle":
+                if output_interface.action == "idle":
                     logging.info("DIMO Tesla: Idle")
+                elif output_interface.action in [
+                    "lock doors",
+                    "unlock doors",
+                    "open frunk",
+                    "open trunk",
+                ]:
+                    timeout = aiohttp.ClientTimeout(total=10)
+                    async with aiohttp.ClientSession(timeout=timeout) as session:
+                        if output_interface.action == "lock doors":
+                            url = f"{self.base_url}/{self.token_id}/commands/doors/lock"
+                            async with session.post(
+                                url,
+                                headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
+                            ) as response:
+                                if response.status == 200:
+                                    logging.info("DIMO Tesla: Door locked")
+                                else:
+                                    text = await response.text()
+                                    logging.error(
+                                        f"Error locking door: {response.status} {text}"
+                                    )
+                        elif output_interface.action == "unlock doors":
+                            url = (
+                                f"{self.base_url}/{self.token_id}/commands/doors/unlock"
+                            )
+                            async with session.post(
+                                url,
+                                headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
+                            ) as response:
+                                if response.status == 200:
+                                    logging.info("DIMO Tesla: Door unlocked")
+                                else:
+                                    text = await response.text()
+                                    logging.error(
+                                        f"Error unlocking door: {response.status} {text}"
+                                    )
+                        elif output_interface.action == "open frunk":
+                            url = f"{self.base_url}/{self.token_id}/commands/frunk/open"
+                            async with session.post(
+                                url,
+                                headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
+                            ) as response:
+                                if response.status == 200:
+                                    logging.info("DIMO Tesla: Frunk opened")
+                                else:
+                                    text = await response.text()
+                                    logging.error(
+                                        f"Error opening frunk: {response.status} {text}"
+                                    )
+                        elif output_interface.action == "open trunk":
+                            url = f"{self.base_url}/{self.token_id}/commands/trunk/open"
+                            async with session.post(
+                                url,
+                                headers={"Authorization": f"Bearer {self.vehicle_jwt}"},
+                            ) as response:
+                                if response.status == 200:
+                                    logging.info("DIMO Tesla: Trunk opened")
+                                else:
+                                    text = await response.text()
+                                    logging.error(
+                                        f"Error opening trunk: {response.status} {text}"
+                                    )
                 else:
                     logging.error(f"Unknown action: {output_interface.action}")
             else:
