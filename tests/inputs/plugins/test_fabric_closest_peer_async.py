@@ -1,7 +1,6 @@
 # tests/inputs/plugins/test_fabric_closest_peer_async.py
 
-import asyncio
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -28,74 +27,85 @@ class TestFabricClosestPeerAsyncBehavior:
         """Create FabricClosestPeer instance."""
         return FabricClosestPeer(config)
 
-    @pytest.mark.asyncio
-    async def test_poll_uses_asyncio_to_thread_for_http(self, peer_instance):
-        """_poll() should use asyncio.to_thread for non-blocking HTTP."""
-        with patch(
-            "inputs.plugins.fabric_closest_peer.asyncio.to_thread"
-        ) as mock_to_thread:
-            mock_response = MagicMock()
-            mock_response.json.return_value = {
-                "result": [{"peer": {"latitude": 40.0, "longitude": -74.0}}]
-            }
-            mock_to_thread.return_value = mock_response
+    def create_aiohttp_mocks(self, response_data):
+        """Create properly configured aiohttp mocks."""
+        mock_response = MagicMock()
+        mock_response.json = AsyncMock(return_value=response_data)
 
+        mock_post_cm = MagicMock()
+        mock_post_cm.__aenter__ = AsyncMock(return_value=mock_response)
+        mock_post_cm.__aexit__ = AsyncMock(return_value=None)
+
+        mock_session = MagicMock()
+        mock_session.post = MagicMock(return_value=mock_post_cm)
+
+        mock_session_cm = MagicMock()
+        mock_session_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_cm.__aexit__ = AsyncMock(return_value=None)
+
+        return mock_session_cm, mock_session, mock_response
+
+    @pytest.mark.asyncio
+    async def test_poll_uses_aiohttp_for_http(self, peer_instance):
+        """_poll() should use aiohttp for non-blocking HTTP."""
+        response_data = {"result": [{"peer": {"latitude": 40.0, "longitude": -74.0}}]}
+        mock_session_cm, mock_session, _ = self.create_aiohttp_mocks(response_data)
+
+        with (
+            patch("inputs.plugins.fabric_closest_peer.aiohttp.ClientTimeout"),
+            patch(
+                "inputs.plugins.fabric_closest_peer.aiohttp.ClientSession",
+                return_value=mock_session_cm,
+            ),
+        ):
             with patch.object(peer_instance.io, "get_dynamic_variable") as mock_gps:
                 mock_gps.side_effect = lambda key: 40.0 if key == "latitude" else -74.0
 
                 await peer_instance._poll()
 
-                assert mock_to_thread.called
+                mock_session.post.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_poll_does_not_block_event_loop(self, peer_instance):
-        """_poll() should not block the event loop during HTTP requests."""
-        quick_task_started = asyncio.Event()
-        quick_task_finished = asyncio.Event()
+    async def test_poll_passes_correct_parameters(self, peer_instance):
+        """_poll() should pass correct JSON-RPC parameters to aiohttp."""
+        response_data = {"result": [{"peer": {"latitude": 40.0, "longitude": -74.0}}]}
+        mock_session_cm, mock_session, _ = self.create_aiohttp_mocks(response_data)
 
-        async def quick_task():
-            quick_task_started.set()
-            await asyncio.sleep(0.01)
-            quick_task_finished.set()
-
-        with patch("inputs.plugins.fabric_closest_peer.requests.post") as mock_post:
-
-            def slow_post(*args, **kwargs):
-                import time
-
-                time.sleep(0.5)
-                mock_response = MagicMock()
-                mock_response.json.return_value = {
-                    "result": [{"peer": {"latitude": 40.0, "longitude": -74.0}}]
-                }
-                return mock_response
-
-            mock_post.side_effect = slow_post
-
+        with (
+            patch("inputs.plugins.fabric_closest_peer.aiohttp.ClientTimeout"),
+            patch(
+                "inputs.plugins.fabric_closest_peer.aiohttp.ClientSession",
+                return_value=mock_session_cm,
+            ),
+        ):
             with patch.object(peer_instance.io, "get_dynamic_variable") as mock_gps:
                 mock_gps.side_effect = lambda key: 40.0 if key == "latitude" else -74.0
 
-                poll_task = asyncio.create_task(peer_instance._poll())
-                quick_task_coro = asyncio.create_task(quick_task())
+                await peer_instance._poll()
 
-                await asyncio.sleep(0.1)
+                call_kwargs = mock_session.post.call_args[1]
+                assert call_kwargs["json"]["method"] == "omp2p_findClosestPeer"
+                assert call_kwargs["json"]["params"][0]["latitude"] == 40.0
+                assert call_kwargs["json"]["params"][0]["longitude"] == -74.0
 
-                if not quick_task_started.is_set():
-                    poll_task.cancel()
-                    quick_task_coro.cancel()
-                    try:
-                        await poll_task
-                    except asyncio.CancelledError:
-                        pass
-                    try:
-                        await quick_task_coro
-                    except asyncio.CancelledError:
-                        pass
-                    pytest.fail("Event loop was blocked during _poll()")
+    @pytest.mark.asyncio
+    async def test_poll_returns_peer_coordinates(self, peer_instance):
+        """_poll() should return human-readable message with coordinates."""
+        response_data = {
+            "result": [{"peer": {"latitude": 40.12345, "longitude": -74.98765}}]
+        }
+        mock_session_cm, mock_session, _ = self.create_aiohttp_mocks(response_data)
 
-                try:
-                    await asyncio.wait_for(poll_task, timeout=2.0)
-                except asyncio.TimeoutError:
-                    poll_task.cancel()
+        with (
+            patch("inputs.plugins.fabric_closest_peer.aiohttp.ClientTimeout"),
+            patch(
+                "inputs.plugins.fabric_closest_peer.aiohttp.ClientSession",
+                return_value=mock_session_cm,
+            ),
+        ):
+            with patch.object(peer_instance.io, "get_dynamic_variable") as mock_gps:
+                mock_gps.side_effect = lambda key: 40.0 if key == "latitude" else -74.0
 
-                await quick_task_coro
+                result = await peer_instance._poll()
+
+                assert result == "Closest peer at 40.12345, -74.98765"
