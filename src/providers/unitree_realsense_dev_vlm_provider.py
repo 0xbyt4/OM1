@@ -187,11 +187,11 @@ class UnitreeRealSenseDevVideoStream(VideoStream):
         try:
             cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         except Exception:
-            pass
+            logger.debug("Camera %s does not support buffer size setting", cam)
         try:
             cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))  # type: ignore
         except Exception:
-            pass
+            logger.debug("Camera %s does not support FOURCC/MJPG codec setting", cam)
         return cap
 
     def _find_rgb_device(self, skip_devices=None):

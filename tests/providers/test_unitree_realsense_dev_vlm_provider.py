@@ -293,3 +293,94 @@ def test_vlm_provider_ws_client_callback():
 
         call_args = mock_stream.call_args[0]
         assert call_args[0] == mock_ws_instance.send_message
+
+
+class TestCameraPropertyLogging:
+    """Tests for camera property setting logging behavior."""
+
+    def test_logs_debug_when_buffer_size_setting_fails(self, caplog):
+        """Test that debug log is emitted when setting buffer size fails."""
+        import logging
+
+        with (
+            patch("providers.unitree_realsense_dev_vlm_provider.cv2") as mock_cv2,
+            patch("providers.unitree_realsense_dev_vlm_provider.ws"),
+            patch("providers.unitree_realsense_dev_vlm_provider.VideoStream"),
+        ):
+            mock_cap = MagicMock()
+            mock_cap.isOpened.return_value = True
+
+            def mock_set(prop, value):
+                if prop == mock_cv2.CAP_PROP_BUFFERSIZE:
+                    raise Exception("Buffer size not supported")
+                return True
+
+            mock_cap.set.side_effect = mock_set
+            mock_cv2.VideoCapture.return_value = mock_cap
+
+            stream = UnitreeRealSenseDevVideoStream(fps=30, resolution=(640, 480))
+
+            with caplog.at_level(logging.DEBUG):
+                stream._open_camera("/dev/video0")
+
+            assert any(
+                "buffer" in record.message.lower() for record in caplog.records
+            ), "Expected debug log when buffer size setting fails"
+
+    def test_logs_debug_when_fourcc_setting_fails(self, caplog):
+        """Test that debug log is emitted when setting FOURCC codec fails."""
+        import logging
+
+        with (
+            patch("providers.unitree_realsense_dev_vlm_provider.cv2") as mock_cv2,
+            patch("providers.unitree_realsense_dev_vlm_provider.ws"),
+            patch("providers.unitree_realsense_dev_vlm_provider.VideoStream"),
+        ):
+            mock_cap = MagicMock()
+            mock_cap.isOpened.return_value = True
+
+            def mock_set(prop, value):
+                if prop == mock_cv2.CAP_PROP_FOURCC:
+                    raise Exception("FOURCC not supported")
+                return True
+
+            mock_cap.set.side_effect = mock_set
+            mock_cv2.VideoCapture.return_value = mock_cap
+
+            stream = UnitreeRealSenseDevVideoStream(fps=30, resolution=(640, 480))
+
+            with caplog.at_level(logging.DEBUG):
+                stream._open_camera("/dev/video0")
+
+            assert any(
+                "fourcc" in record.message.lower() or "codec" in record.message.lower()
+                for record in caplog.records
+            ), "Expected debug log when FOURCC setting fails"
+
+    def test_no_debug_log_when_settings_succeed(self, caplog):
+        """Test that no debug logs are emitted when all settings succeed."""
+        import logging
+
+        with (
+            patch("providers.unitree_realsense_dev_vlm_provider.cv2") as mock_cv2,
+            patch("providers.unitree_realsense_dev_vlm_provider.ws"),
+            patch("providers.unitree_realsense_dev_vlm_provider.VideoStream"),
+        ):
+            mock_cap = MagicMock()
+            mock_cap.isOpened.return_value = True
+            mock_cap.set.return_value = True
+            mock_cv2.VideoCapture.return_value = mock_cap
+
+            stream = UnitreeRealSenseDevVideoStream(fps=30, resolution=(640, 480))
+
+            with caplog.at_level(logging.DEBUG):
+                stream._open_camera("/dev/video0")
+
+            buffer_fourcc_logs = [
+                r
+                for r in caplog.records
+                if "buffer" in r.message.lower() or "fourcc" in r.message.lower()
+            ]
+            assert (
+                len(buffer_fourcc_logs) == 0
+            ), "No buffer/fourcc logs expected when settings succeed"
