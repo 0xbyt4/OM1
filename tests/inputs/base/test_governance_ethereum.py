@@ -27,11 +27,6 @@ def mock_requests_post():
         yield mock
 
 
-# -------------------------------
-# TEST: Blockchain Rule Loading
-# -------------------------------
-
-
 def test_load_rules_from_blockchain_success(governance, mock_requests_post):
     """Test blockchain rule loading with a valid response."""
     mock_requests_post.return_value.status_code = 200
@@ -56,20 +51,8 @@ def test_load_rules_from_blockchain_failure(governance, mock_requests_post):
     logging.info("Test Blockchain Failure: No rules loaded")
 
 
-# ------------------------
-# TEST: Polling Behavior
-# ------------------------
-
-
-# -------------------------------
-# TEST: decode_eth_response
-# -------------------------------
-
-
 def test_decode_eth_response_valid_hex(governance):
     """Test decode_eth_response with valid hex data."""
-    # This is a simplified valid hex response encoding "Hello"
-    # Structure: offset (32 bytes) + array length (32 bytes) + string offset (32 bytes) + string length (32 bytes) + string data
     hex_response = (
         "0x"
         + "0000000000000000000000000000000000000000000000000000000000000020"  # offset
@@ -108,11 +91,6 @@ def test_decode_eth_response_too_short(governance):
     assert result == ""
 
 
-# ------------------------
-# TEST: Polling Behavior
-# ------------------------
-
-
 @pytest.mark.asyncio
 async def test_poll_returns_rules(mock_requests_post):
     """Test _poll returns rules from blockchain."""
@@ -131,8 +109,6 @@ async def test_poll_returns_rules(mock_requests_post):
     }
 
     governance = GovernanceEthereum(config=SensorConfig())
-    governance.POLL_INTERVAL = 0.01  # Speed up test
-
     result = await governance._poll()
     assert result is not None
 
@@ -143,15 +119,8 @@ async def test_poll_handles_exception(mock_requests_post):
     mock_requests_post.side_effect = Exception("Network error")
 
     governance = GovernanceEthereum(config=SensorConfig())
-    governance.POLL_INTERVAL = 0.01
-
     result = await governance._poll()
     assert result is None
-
-
-# ------------------------
-# TEST: _raw_to_text
-# ------------------------
 
 
 @pytest.mark.asyncio
@@ -168,11 +137,6 @@ async def test_raw_to_text_with_none_input(governance):
     """Test _raw_to_text returns None for None input."""
     result = await governance._raw_to_text(None)
     assert result is None
-
-
-# ------------------------
-# TEST: raw_to_text (buffer)
-# ------------------------
 
 
 @pytest.mark.asyncio
@@ -210,11 +174,6 @@ async def test_raw_to_text_ignores_none(governance):
     governance.messages = []
     await governance.raw_to_text(None)
     assert len(governance.messages) == 0
-
-
-# ------------------------
-# TEST: formatted_latest_buffer
-# ------------------------
 
 
 def test_formatted_latest_buffer_empty(governance):
