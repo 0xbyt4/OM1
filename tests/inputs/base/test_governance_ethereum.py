@@ -206,5 +206,4 @@ def test_formatted_latest_buffer_does_not_clear_messages(governance):
     governance.messages = [Message(timestamp=1234567890.0, message="Persistent rule")]
     governance.formatted_latest_buffer()
 
-    # Messages should NOT be cleared (unlike other plugins)
     assert len(governance.messages) == 1
