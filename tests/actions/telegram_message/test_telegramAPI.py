@@ -52,7 +52,7 @@ class TestTelegramAPIConnectorInit:
                 clear=True,
             ),
         ):
-            config = ActionConfig(name="telegram_message")
+            config = ActionConfig()
             connector = TelegramAPIConnector(config)
             assert connector.bot_token == "test-bot-token"
             assert connector.chat_id == "test-chat-id"
@@ -66,7 +66,7 @@ class TestTelegramAPIConnectorInit:
                 "actions.telegram_message.connector.telegramAPI.logging.warning"
             ) as mock_warning,
         ):
-            config = ActionConfig(name="telegram_message")
+            config = ActionConfig()
             connector = TelegramAPIConnector(config)
             assert connector.bot_token is None
             mock_warning.assert_any_call("TELEGRAM_BOT_TOKEN not set in environment")
@@ -80,7 +80,7 @@ class TestTelegramAPIConnectorInit:
                 "actions.telegram_message.connector.telegramAPI.logging.warning"
             ) as mock_warning,
         ):
-            config = ActionConfig(name="telegram_message")
+            config = ActionConfig()
             connector = TelegramAPIConnector(config)
             assert connector.chat_id is None
             mock_warning.assert_any_call("TELEGRAM_CHAT_ID not set in environment")
@@ -94,7 +94,7 @@ class TestTelegramAPIConnectorInit:
                 "actions.telegram_message.connector.telegramAPI.logging.warning"
             ) as mock_warning,
         ):
-            config = ActionConfig(name="telegram_message")
+            config = ActionConfig()
             connector = TelegramAPIConnector(config)
             assert connector.bot_token is None
             assert connector.chat_id is None
@@ -118,7 +118,7 @@ class TestTelegramAPIConnectorConnect:
                 clear=True,
             ),
         ):
-            config = ActionConfig(name="telegram_message")
+            config = ActionConfig()
             return TelegramAPIConnector(config)
 
     @pytest.mark.asyncio
@@ -128,7 +128,7 @@ class TestTelegramAPIConnectorConnect:
             patch("actions.telegram_message.connector.telegramAPI.load_dotenv"),
             patch.dict("os.environ", {}, clear=True),
         ):
-            config = ActionConfig(name="telegram_message")
+            config = ActionConfig()
             connector = TelegramAPIConnector(config)
 
             with patch(
@@ -214,7 +214,7 @@ class TestActionLoading:
         sys.path.insert(0, "src")
         from actions import load_action
 
-        config = {
+        config: dict[str, str | dict[str, str]] = {
             "name": "telegram_message",
             "llm_label": "notify",
             "connector": "telegramAPI",
@@ -243,6 +243,7 @@ class TestActionLoading:
         from actions import describe_action
 
         desc = describe_action("telegram_message", "notify", False)
+        assert desc is not None
         assert "NOTIFY" in desc
         assert "Telegram" in desc
         assert "type=notify" in desc
