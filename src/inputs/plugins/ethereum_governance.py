@@ -72,7 +72,8 @@ class GovernanceEthereum(FuserInput[SensorConfig, Optional[str]]):
                     logging.error("Error: No valid result in blockchain response")
             else:
                 logging.error(
-                    f"Error: Blockchain request failed with status {response.status_code}"
+                    f"Error: Blockchain request failed with status "
+                    f"{response.status_code}"
                 )
 
         except Exception as e:
@@ -130,7 +131,10 @@ class GovernanceEthereum(FuserInput[SensorConfig, Optional[str]]):
         # The current rule set can be obtained from
         # getLatestRuleSetVersion(0x254e2f1e)
         # It's currently = 2
-        self.function_argument = "0000000000000000000000000000000000000000000000000000000000000002"  # Argument
+        # Function argument for getRuleSet()
+        self.function_argument = (
+            "0000000000000000000000000000000000000000000000000000000000000002"
+        )
 
         self.universal_rule = self.load_rules_from_blockchain()
         self.messages: list[Message] = []

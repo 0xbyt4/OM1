@@ -70,10 +70,12 @@ class VLM_COCO_Local(FuserInput[VLM_COCO_LocalConfig, Optional[np.ndarray]]):
         # Messages buffer
         self.messages: list[Message] = []
 
-        # Simple description of sensor output to help LLM understand its importance and utility
+        # Simple description of sensor output to help LLM understand its
+        # importance and utility
         self.descriptor_for_LLM = "Object Detector"
 
-        # Low resolution Faster R-CNN model with a MobileNetV3-Large backbone tuned for mobile use cases.
+        # Low resolution Faster R-CNN model with a MobileNetV3-Large backbone
+        # tuned for mobile use cases.
         self.model = detection_model.fasterrcnn_mobilenet_v3_large_320_fpn(
             weights="FasterRCNN_MobileNet_V3_Large_320_FPN_Weights.COCO_V1",
             progress=True,

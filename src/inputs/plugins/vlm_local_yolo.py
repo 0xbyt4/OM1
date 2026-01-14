@@ -115,7 +115,8 @@ class VLM_Local_YOLO(FuserInput[VLM_Local_YOLOConfig, Optional[List]]):
         # Messages buffer
         self.messages: list[Message] = []
 
-        # Simple description of sensor output to help LLM understand its importance and utility
+        # Simple description of sensor output to help LLM understand its
+        # importance and utility
         self.descriptor_for_LLM = "Eyes"
 
         # Load model
@@ -271,8 +272,9 @@ class VLM_Local_YOLO(FuserInput[VLM_Local_YOLOConfig, Optional[List]]):
 
     def write_str_to_file(self, json_line: str):
         """
-        Writes a dictionary to a file in JSON lines format. If the file exceeds max_file_size_bytes,
-        creates a new file with a timestamp.
+        Writes a dictionary to a file in JSON lines format.
+
+        If the file exceeds max_file_size_bytes, creates a new file with a timestamp.
 
         Parameters
         ----------

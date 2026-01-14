@@ -43,7 +43,10 @@ class SimplePaths(FuserInput[SensorConfig, Optional[str]]):
         self.paths_provider: SimplePathsProvider = SimplePathsProvider()
         self.paths_provider.start()
 
-        self.descriptor_for_LLM = "Information about objects and walls around you, to plan your movements and avoid bumping into things."
+        self.descriptor_for_LLM = (
+            "Information about objects and walls around you, "
+            "to plan your movements and avoid bumping into things."
+        )
 
     async def _poll(self) -> Optional[str]:
         """

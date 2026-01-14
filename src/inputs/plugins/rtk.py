@@ -94,7 +94,10 @@ class Rtk(FuserInput[SensorConfig, Optional[dict]]):
                 lon *= -1.0
 
             if qua > 0:
-                msg = f"Your precise location is {lat} {lat_string}, {lon} {lon_string} at {alt}m altitude. "
+                msg = (
+                    f"Your precise location is {lat} {lat_string}, "
+                    f"{lon} {lon_string} at {alt}m altitude. "
+                )
                 return Message(timestamp=time.time(), message=msg)
             else:
                 return None

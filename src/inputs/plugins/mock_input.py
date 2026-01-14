@@ -69,7 +69,7 @@ class MockInput(FuserInput[MockSensorConfig, Optional[str]]):
         ----------
         config : MockSensorConfig
             Configuration object containing the input settings. The config includes:
-            - `input_name`: Name identifier for this input source (default: "Mock Input")
+            - `input_name`: Name identifier for this input source
             - `host`: Host address for the WebSocket server (default: "localhost")
             - `port`: Port number for the WebSocket server (default: 8765)
 
@@ -162,7 +162,8 @@ class MockInput(FuserInput[MockSensorConfig, Optional[str]]):
                             text = message.decode("utf-8")
                         except Exception as e:
                             logging.warning(
-                                f"Received binary data that couldn't be decoded. Skipping: {e}"
+                                f"Received binary data that couldn't be decoded. "
+                                f"Skipping: {e}"
                             )
                             continue
 

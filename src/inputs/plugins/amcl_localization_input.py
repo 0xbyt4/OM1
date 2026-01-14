@@ -59,20 +59,30 @@ class AMCLLocalizationInput(FuserInput[SensorConfig, Optional[str]]):
             pose = self.amcl_provider.pose
 
             if is_localized and pose is not None:
-                status_msg = "LOCALIZED: Robot position is confirmed. Navigation commands are safe to execute."
+                status_msg = (
+                    "LOCALIZED: Robot position is confirmed. "
+                    "Navigation commands are safe to execute."
+                )
                 pos = pose.position
                 logging.debug(
-                    f"Robot localized at position x:{pos.x:.2f}, y:{pos.y:.2f}, z:{pos.z:.2f}"
+                    f"Robot localized at position "
+                    f"x:{pos.x:.2f}, y:{pos.y:.2f}, z:{pos.z:.2f}"
                 )
             else:
-                status_msg = "NOT LOCALIZED: Robot position uncertain. DO NOT attempt navigation until localized."
+                status_msg = (
+                    "NOT LOCALIZED: Robot position uncertain. "
+                    "DO NOT attempt navigation until localized."
+                )
                 logging.debug("Robot localization status: NOT LOCALIZED")
 
             return status_msg
 
         except Exception as e:
             logging.error(f"Error polling localization status: {e}")
-            return "LOCALIZATION ERROR: Unable to determine robot position. Navigation not recommended."
+            return (
+                "LOCALIZATION ERROR: Unable to determine robot position. "
+                "Navigation not recommended."
+            )
 
     async def _raw_to_text(self, raw_input: Optional[str]) -> Optional[Message]:
         """

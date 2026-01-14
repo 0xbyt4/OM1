@@ -82,7 +82,8 @@ class WalletEthereum(FuserInput[SensorConfig, List[float]]):
                 "balance": self.balance_eth,
             }
             logging.debug(
-                f"Block: {self.eth_info['block_number']}, Account Balance: {self.eth_info['balance']:.3f} ETH"
+                f"Block: {self.eth_info['block_number']}, "
+                f"Account Balance: {self.eth_info['balance']:.3f} ETH"
             )
 
             # randomly simulate ETH inbound transfers for debugging purposes

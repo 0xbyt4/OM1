@@ -69,7 +69,8 @@ class GoogleASRRTSPSensorConfig(SensorConfig):
 
 class GoogleASRRTSPInput(FuserInput[GoogleASRRTSPSensorConfig, Optional[str]]):
     """
-    Google ASR RTSP input handler for processing speech recognition from RTSP audio streams.
+    Google ASR RTSP input handler for processing speech recognition
+    from RTSP audio streams.
     """
 
     def __init__(self, config: GoogleASRRTSPSensorConfig):
@@ -106,7 +107,9 @@ class GoogleASRRTSPInput(FuserInput[GoogleASRRTSPSensorConfig, Optional[str]]):
 
         if language not in LANGUAGE_CODE_MAP:
             logging.error(
-                f"Language {language} not supported. Current supported languages are : {list(LANGUAGE_CODE_MAP.keys())}. Defaulting to English"
+                f"Language {language} not supported. "
+                f"Current supported languages are: "
+                f"{list(LANGUAGE_CODE_MAP.keys())}. Defaulting to English"
             )
             language = "english"
 

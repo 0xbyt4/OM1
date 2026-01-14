@@ -80,7 +80,8 @@ class FabricClosestPeer(FuserInput[FabricClosestPeerConfig, Optional[str]]):
             peer_lat = self.config.mock_lat
             peer_lon = self.config.mock_lon
             logging.info(
-                f"FabricClosestPeer (mock): fabricated peer {peer_lat:.6f},{peer_lon:.6f}"
+                f"FabricClosestPeer (mock): fabricated peer "
+                f"{peer_lat:.6f},{peer_lon:.6f}"
             )
         else:
             if requests is None:

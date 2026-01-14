@@ -89,7 +89,8 @@ class TurtleBot4Battery(FuserInput[TurtleBot4BatteryConfig, List[str]]):
             f"{self.URID}/c3/dock_status", self.listener_dock
         )
 
-        # Simple description of sensor output to help LLM understand its importance and utility
+        # Simple description of sensor output to help LLM understand its
+        # importance and utility
         self.descriptor_for_LLM = "Energy Level"
 
     def listener_battery(self, sample: zenoh.Sample):

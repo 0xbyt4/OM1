@@ -64,7 +64,8 @@ class WalletCoinbase(FuserInput[WalletCoinbaseConfig, List[float]]):
         API_SECRET = os.environ.get("COINBASE_API_SECRET")
         if not API_KEY or not API_SECRET:
             logging.error(
-                "COINBASE_API_KEY or COINBASE_API_SECRET environment variable is not set"
+                "COINBASE_API_KEY or COINBASE_API_SECRET "
+                "environment variable is not set"
             )
         else:
             Cdp.configure(API_KEY, API_SECRET)
@@ -107,7 +108,9 @@ class WalletCoinbase(FuserInput[WalletCoinbaseConfig, List[float]]):
         try:
             self.wallet = Wallet.fetch(self.COINBASE_WALLET_ID)  # type: ignore
             logging.info(
-                f"WalletCoinbase: Wallet refreshed: {self.wallet.balance(self.asset_id)}, the current balance is {self.balance}"
+                f"WalletCoinbase: Wallet refreshed: "
+                f"{self.wallet.balance(self.asset_id)}, "
+                f"the current balance is {self.balance}"
             )
             self.balance = float(self.wallet.balance(self.asset_id))
             balance_change = self.balance - self.balance_previous

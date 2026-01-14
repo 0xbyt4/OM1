@@ -70,7 +70,10 @@ class Odom(FuserInput[OdomConfig, Optional[dict]]):
             logging.info(f"Odom using Zenoh and URID: {self.URID}")
 
         self.odom = OdomProvider(self.URID, use_zenoh, unitree_ethernet)
-        self.descriptor_for_LLM = "Information about your location and body pose, to help plan your movements."
+        self.descriptor_for_LLM = (
+            "Information about your location and body pose, "
+            "to help plan your movements."
+        )
 
     async def _poll(self) -> Optional[dict]:
         """

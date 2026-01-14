@@ -195,8 +195,9 @@ class DIMOTesla(FuserInput[DIMOTeslaConfig, Optional[str]]):
             logging.error(f"Error parsing Tesla data: {e}")
             return None
 
+        powertrain_dist = powertrainTransmissionTravelledDistance
         return f"""
-        Powertrain Transmission Travelled Distance: {powertrainTransmissionTravelledDistance} km
+        Powertrain Transmission Travelled Distance: {powertrain_dist} km
         Exterior Air Temperature: {exteriorAirTemperature} C
         Speed: {speed} km/h
         Powertrain Range: {powertrainRange} km

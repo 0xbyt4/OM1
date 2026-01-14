@@ -86,7 +86,8 @@ class GalleryIdentities(FuserInput[GalleryIdentitiesConfig, Optional[str]]):
         Parameters
         ----------
         text_line : str
-            A single preformatted summary string (e.g., "total=3 ids=[alice, bob, wendy]").
+            A single preformatted summary string
+            (e.g., "total=3 ids=[alice, bob, wendy]").
         """
         try:
             self.message_buffer.put_nowait(text_line)

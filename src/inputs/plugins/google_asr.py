@@ -127,7 +127,9 @@ class GoogleASRInput(FuserInput[GoogleASRSensorConfig, Optional[str]]):
 
         if language not in LANGUAGE_CODE_MAP:
             logging.error(
-                f"Language {language} not supported. Current supported languages are : {list(LANGUAGE_CODE_MAP.keys())}. Defaulting to English"
+                f"Language {language} not supported. "
+                f"Current supported languages are: "
+                f"{list(LANGUAGE_CODE_MAP.keys())}. Defaulting to English"
             )
             language = "english"
 

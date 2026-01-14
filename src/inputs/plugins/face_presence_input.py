@@ -90,7 +90,8 @@ class FacePresence(FuserInput[FacePresenceConfig, Optional[str]]):
         Parameters
         ----------
         text_line : str
-            A single, already formatted line (e.g., "present=[alice], unknown=0, ts=...").
+            A single, already formatted line
+            (e.g., "present=[alice], unknown=0, ts=...").
         """
         try:
             self.message_buffer.put_nowait(text_line)

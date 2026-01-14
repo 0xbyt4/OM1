@@ -93,7 +93,10 @@ class RPLidar(FuserInput[RPLidarConfig, Optional[str]]):
         self.lidar: RPLidarProvider = RPLidarProvider(**lidar_config)
         self.lidar.start()
 
-        self.descriptor_for_LLM = "Information about objects and walls around you, to plan your movements and avoid bumping into things."
+        self.descriptor_for_LLM = (
+            "Information about objects and walls around you, "
+            "to plan your movements and avoid bumping into things."
+        )
 
     async def _poll(self) -> Optional[str]:
         """
