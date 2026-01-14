@@ -206,8 +206,9 @@ class FabricDataSubmitter:
 
     def write_dict_to_file(self, data: dict):
         """
-        Writes a dictionary to a file in JSON lines format. If the file exceeds max_file_size_bytes,
-        creates a new file with a timestamp.
+        Writes a dictionary to a file in JSON lines format.
+        If the file exceeds max_file_size_bytes, creates a new file
+        with a timestamp.
 
         Parameters
         ----------
@@ -274,8 +275,8 @@ class FabricDataSubmitter:
     def share_data(self, data: FabricData):
         """
         Share mapping data.
-        This function submits mapping data collected by a machine to a thread pool executor
-        to run in a separate thread.
+        This function submits mapping data collected by a machine to a
+        thread pool executor to run in a separate thread.
 
         Parameters
         ----------

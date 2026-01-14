@@ -72,7 +72,10 @@ class VLMOpenAIProvider:
                         "content": [
                             {
                                 "type": "text",
-                                "text": "What is the most interesting aspect in this series of images?",
+                                "text": (
+                                    "What is the most interesting aspect "
+                                    "in this series of images?"
+                                ),
                             },
                             {
                                 "type": "image_url",

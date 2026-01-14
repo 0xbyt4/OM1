@@ -17,17 +17,18 @@ class GpsProvider:
     """
     GPS Provider for managing GPS, magnetometer, and BLE data from serial connection.
 
-    This class implements a singleton pattern to manage GPS data acquisition from a serial
-    port connection (typically connected to an Arduino-based GPS module). It handles:
+    This class implements a singleton pattern to manage GPS data acquisition
+    from a serial port connection (typically connected to an Arduino-based
+    GPS module). It handles:
         * GPS position data (latitude, longitude, altitude)
         * Satellite information and fix quality
         * Magnetometer heading data
         * BLE (Bluetooth Low Energy) scan data for triangulation
         * Real-time data processing in a background thread
 
-    The provider automatically starts a background thread upon initialization to continuously
-    read and process incoming serial data. GPS data is updated in real-time and can be accessed
-    through the `data` property.
+    The provider automatically starts a background thread upon initialization
+    to continuously read and process incoming serial data. GPS data is updated
+    in real-time and can be accessed through the `data` property.
     """
 
     def __init__(self, serial_port: str = ""):
@@ -157,7 +158,8 @@ class GpsProvider:
 
                     logging.debug(
                         (
-                            f"Current location is {self.lat}, {self.lon} at {alt}m altitude. "
+                            f"Current location is {self.lat}, {self.lon} "
+                            f"at {alt}m altitude. "
                             f"GPS Heading {heading}° with {sat} satellites locked. "
                             f"The unix timestamp is {self.gps_unix_ts}. "
                             f"The fix quality is {self.qua}."

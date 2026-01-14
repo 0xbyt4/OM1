@@ -16,8 +16,8 @@ class VLMOpenAIRTSPProvider:
     """
     VLM Provider that handles audio streaming and websocket communication.
 
-    This class implements a singleton pattern to manage video stream from RTSP and websocket
-    communication for vlm services. It runs in a separate thread to handle
+    This class implements a singleton pattern to manage video stream from RTSP
+    and websocket communication for vlm services. It runs in a separate thread to handle
     continuous vlm processing.
     """
 

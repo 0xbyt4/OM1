@@ -73,7 +73,8 @@ class TurtleBot4CameraVideoStream(VideoStream):
             self.session = open_zenoh_session()
             topic = f"{URID}/pi/oakd/rgb/preview/image_raw"
             logging.info(
-                f"TurtleBot4 Camera listener starting with URID: {URID} and topic: {topic}"
+                f"TurtleBot4 Camera listener starting with URID: {URID} "
+                f"and topic: {topic}"
             )
             self.camera = self.session.declare_subscriber(topic, self.camera_listener)
             logging.info("Zenoh TurtleBot4 Camera subscriber created")

@@ -21,9 +21,11 @@ class ElevenLabsTTSProvider:
     api_key : str
         The API key for the TTS service
     voice_id : str, optional
-        The name of the voice for Eleven Labs TTS service (default is JBFqnCBsd6RMkjVDRZzb)
+        The name of the voice for Eleven Labs TTS service
+        (default is JBFqnCBsd6RMkjVDRZzb)
     model_id : str, optional
-        The name of the model for Eleven Labs TTS service (default is eleven_multilingual
+        The name of the model for Eleven Labs TTS service
+        (default is eleven_multilingual)
     output_format : str, optional
         The output format for the audio stream (default is mp3_44100_128)
     """

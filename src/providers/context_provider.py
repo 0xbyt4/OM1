@@ -47,7 +47,8 @@ class ContextProvider:
         Parameters
         ----------
         context : Dict[str, Any]
-            The context information to update. This will be merged with existing context.
+            The context information to update.
+            This will be merged with existing context.
         """
         if not self.publisher:
             logging.warning("ContextProvider not initialized, cannot update context")

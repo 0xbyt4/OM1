@@ -220,7 +220,8 @@ class FacePresenceProvider:
         Parameters
         ----------
         text : str
-            A concise, human-readable snapshot (e.g., "present=[alice], unknown=0, ts=...").
+            A concise, human-readable snapshot
+            (e.g., "present=[alice], unknown=0, ts=...").
         """
         with self._cb_lock:
             callbacks = list(self._callbacks)
@@ -275,7 +276,8 @@ class FacePresenceProvider:
                 ):
                     unknown_faces = 0  # suppress brief/rare unknowns
                 else:
-                    unknown_faces = unknown_peak  # report the maximum unknown seen in any single frame
+                    # report the maximum unknown seen in any single frame
+                    unknown_faces = unknown_peak
             else:
                 now = data.get("now", []) or []
                 seen, names_fallback = set(), []
@@ -304,5 +306,5 @@ class FacePresenceProvider:
 
     @property
     def unknown_faces(self) -> int:
-        """Most recent (suppressed) count of unknown faces detected in the lookback window."""
+        """Most recent (suppressed) count of unknown faces in the lookback window."""
         return self._unknown_faces

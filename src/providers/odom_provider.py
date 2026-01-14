@@ -19,7 +19,8 @@ try:
     from unitree.unitree_sdk2py.idl.geometry_msgs.msg.dds_ import PoseStamped_
 except ImportError:
     logging.warning(
-        "Unitree SDK or CycloneDDS not found. You do not need this unless you are connecting to a Unitree robot."
+        "Unitree SDK or CycloneDDS not found. You do not need this "
+        "unless you are connecting to a Unitree robot."
     )
 
 from zenoh_msgs import (
@@ -69,7 +70,8 @@ def odom_processor(
         If True, get odom/pose data from Zenoh (typically used by TurtleBot4).
         Otherwise, use CycloneDDS (e.g., for Unitree Go2).
     logging_config : LoggingConfig, optional
-        Optional logging configuration. If provided, it will override the default logging settings.
+        Optional logging configuration. If provided, it will override
+        the default logging settings.
     """
     setup_logging("odom_processor", logging_config=logging_config)
 
@@ -294,8 +296,8 @@ class OdomProvider:
             pose = pose_data.pose
             header = pose_data.header
 
-            # this is the time according to the RockChip. It may be off by several seconds from
-            # UTC
+            # this is the time according to the RockChip.
+            # It may be off by several seconds from UTC
             self.odom_rockchip_ts = header.stamp.sec + header.stamp.nanosec * 1e-9
 
             # The local timestamp
@@ -358,7 +360,8 @@ class OdomProvider:
             self.x = round(pose.position.x, 4)
             self.y = round(pose.position.y, 4)
             logging.debug(
-                f"odom: X:{self.x} Y:{self.y} W:{self.odom_yaw_m180_p180} H:{self.odom_yaw_0_360} T:{self.odom_rockchip_ts}"
+                f"odom: X:{self.x} Y:{self.y} W:{self.odom_yaw_m180_p180} "
+                f"H:{self.odom_yaw_0_360} T:{self.odom_rockchip_ts}"
             )
 
     @property
@@ -375,11 +378,15 @@ class OdomProvider:
             - x: The x coordinate of the robot in the world frame.
             - y: The y coordinate of the robot in the world frame.
             - moving: A boolean indicating if the robot is currently moving.
-            - odom_yaw_0_360: The yaw angle of the robot in degrees, ranging from 0 to 360.
+            - odom_yaw_0_360: The yaw angle of the robot in degrees,
+              ranging from 0 to 360.
             - body_height_cm: The height of the robot's body in centimeters.
-            - body_attitude: The current attitude of the robot (e.g., sitting or standing).
-            - odom_rockchip_ts: The unix timestamp of the last odometry update. Provided by the CycloneDDS publisher.
-            - odom_subscriber_ts: The unix timestamp of the last odometry update according to the subscriber.
+            - body_attitude: The current attitude of the robot
+              (e.g., sitting or standing).
+            - odom_rockchip_ts: The unix timestamp of the last odometry update.
+              Provided by the CycloneDDS publisher.
+            - odom_subscriber_ts: The unix timestamp of the last odometry update
+              according to the subscriber.
         """
         return {
             "odom_x": self.x,

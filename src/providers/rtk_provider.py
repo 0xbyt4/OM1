@@ -123,8 +123,9 @@ class RtkProvider:
 
             # NMEA-GN-GGA
             # Description:
-            # Standard NMEA: Global positioning system fix data. This message contains time, date,
-            # position (in LLH coordinates), fix quality, number of satellites, and horizontal dilution of
+            # Standard NMEA: Global positioning system fix data.
+            # This message contains time, date, position (in LLH coordinates),
+            # fix quality, number of satellites, and horizontal dilution of
             # precision (HDOP) data provided by the selected source.
 
             if msg and msg.msgID == "GGA":

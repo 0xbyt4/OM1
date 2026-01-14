@@ -197,7 +197,10 @@ class SimplePathsProvider:
             A string describing the safe movement directions based on the valid paths.
         """
         if not valid_paths:
-            return "You are surrounded by objects and cannot safely move in any direction. DO NOT MOVE."
+            return (
+                "You are surrounded by objects and cannot safely move "
+                "in any direction. DO NOT MOVE."
+            )
 
         parts = ["The safe movement directions are: {"]
 

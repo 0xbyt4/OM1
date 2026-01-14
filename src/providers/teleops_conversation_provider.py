@@ -151,15 +151,18 @@ class TeleopsConversationProvider:
 
             if request.status_code == 200:
                 logging.debug(
-                    f"Successfully stored {message.message_type.value} message to conversation"
+                    f"Successfully stored {message.message_type.value} "
+                    "message to conversation"
                 )
             else:
                 logging.debug(
-                    f"Failed to store {message.message_type.value} message: {request.status_code} - {request.text}"
+                    f"Failed to store {message.message_type.value} message: "
+                    f"{request.status_code} - {request.text}"
                 )
         except Exception as e:
             logging.debug(
-                f"Error storing {message.message_type.value} conversation message: {str(e)}"
+                f"Error storing {message.message_type.value} "
+                f"conversation message: {str(e)}"
             )
 
     def _store_message(self, message: ConversationMessage) -> None:

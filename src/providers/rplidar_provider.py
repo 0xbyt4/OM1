@@ -64,7 +64,8 @@ def rplidar_processor(
     config : Dict
         Configuration dictionary containing parameters for the RPLidar.
     logging_config : Optional[LoggingConfig]
-        Optional logging configuration. If provided, it will override the default logging settings.
+        Optional logging configuration. If provided, it will override
+        the default logging settings.
     """
     setup_logging("rplidar_processor", logging_config=logging_config)
 
@@ -237,7 +238,8 @@ class RPLidarProvider:
 
         # Initialize paths for path planning
         # Define 9 straight line paths separated by 15 degrees
-        # Center path is 0° (straight forward), then ±15°, ±30°, ±45°, ±60°, 180° (backwards)
+        # Center path is 0° (straight forward), then ±15°, ±30°, ±45°,
+        # ±60°, 180° (backwards)
         self.path_angles = [-60, -45, -30, -15, 0, 15, 30, 45, 60, 180]
         self.paths = self._initialize_paths()
 
@@ -265,7 +267,8 @@ class RPLidarProvider:
 
                 if self.machine_type == "tb4":
                     logging.info(
-                        f"{self.machine_type} RPLIDAR listener starting with URID: {self.URID}"
+                        f"{self.machine_type} RPLIDAR listener starting "
+                        f"with URID: {self.URID}"
                     )
                     self.zen.declare_subscriber(
                         f"{self.URID}/pi/scan", self.listen_scan
@@ -277,7 +280,8 @@ class RPLidarProvider:
 
                 if self.machine_type != "tb4" and self.machine_type != "go2":
                     raise ValueError(
-                        f"Unsupported machine type: {self.machine_type}. Supported types are 'tb4' and 'go2'."
+                        f"Unsupported machine type: {self.machine_type}. "
+                        "Supported types are 'tb4' and 'go2'."
                     )
 
             except Exception as e:
@@ -298,8 +302,9 @@ class RPLidarProvider:
 
     def write_str_to_file(self, json_line: str):
         """
-        Writes a dictionary to a file in JSON lines format. If the file exceeds max_file_size_bytes,
-        creates a new file with a timestamp.
+        Writes a dictionary to a file in JSON lines format.
+        If the file exceeds max_file_size_bytes, creates a new file
+        with a timestamp.
 
         Parameters
         ----------
@@ -339,7 +344,8 @@ class RPLidarProvider:
     def start(self):
         """
         Start the RPLidar provider.
-        This method initializes the RPLidar processing thread and the serial data processing thread.
+        This method initializes the RPLidar processing thread
+        and the serial data processing thread.
         """
         self.running = True
 
@@ -387,7 +393,10 @@ class RPLidarProvider:
         if scan is None:
             logging.info("Waiting for Zenoh Laserscan data...")
             self._raw_scan = None
-            self._lidar_string = "You might be surrounded by objects and cannot safely move in any direction. DO NOT MOVE."
+            self._lidar_string = (
+                "You might be surrounded by objects and cannot safely move "
+                "in any direction. DO NOT MOVE."
+            )
             self._valid_paths = []
         else:
             # logging.debug(f"_preprocess_zenoh: {scan}")
@@ -507,9 +516,9 @@ class RPLidarProvider:
                 logging.error(f"Error saving rplidar to file: {str(e)}")
 
         # sort data into strictly increasing angles to deal with sensor issues
-        # the sensor sometimes reports part of the previous scan and part of the next scan
-        # so you end up with multiple slightly different values for some angles at the
-        # junction
+        # the sensor sometimes reports part of the previous scan and part of
+        # the next scan so you end up with multiple slightly different values
+        # for some angles at the junction
 
         """
         Determine set of possible paths
@@ -592,7 +601,8 @@ class RPLidarProvider:
         self._valid_paths = ppl
 
         logging.debug(
-            f"RPLidar Provider string: {self._lidar_string}\nValid paths: {self._valid_paths}"
+            f"RPLidar Provider string: {self._lidar_string}\n"
+            f"Valid paths: {self._valid_paths}"
         )
 
     def _serial_processor(self):
@@ -764,8 +774,10 @@ class RPLidarProvider:
     ) -> float:
         """
         Calculate the distance from a point to a line segment.
-        This method computes the shortest distance from a point (px, py) to a line segment defined by two endpoints (x1, y1) and (x2, y2).
-        If the line segment has zero length, it returns the distance from the point to one of the endpoints.
+        This method computes the shortest distance from a point (px, py) to
+        a line segment defined by two endpoints (x1, y1) and (x2, y2).
+        If the line segment has zero length, it returns the distance from
+        the point to one of the endpoints.
 
         Parameters
         ----------
@@ -786,7 +798,8 @@ class RPLidarProvider:
         -------
         float
             The shortest distance from the point to the line segment.
-            If the line segment has zero length, it returns the distance to the closest endpoint.
+            If the line segment has zero length, it returns the distance
+            to the closest endpoint.
         """
         dx = x2 - x1
         dy = y2 - y1
@@ -795,7 +808,8 @@ class RPLidarProvider:
         if dx == 0 and dy == 0:
             return math.sqrt((px - x1) ** 2 + (py - y1) ** 2)
 
-        # Calculate the parameter t that represents the projection of the point onto the line
+        # Calculate the parameter t that represents the projection of the point
+        # onto the line
         t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)
 
         # Clamp t to [0, 1] to stay within the line segment
@@ -823,7 +837,10 @@ class RPLidarProvider:
             A string describing the safe movement directions based on the valid paths.
         """
         if not valid_paths:
-            return "You are surrounded by objects and cannot safely move in any direction. DO NOT MOVE."
+            return (
+                "You are surrounded by objects and cannot safely move "
+                "in any direction. DO NOT MOVE."
+            )
 
         parts = ["The safe movement directions are: {"]
 

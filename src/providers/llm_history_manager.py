@@ -39,8 +39,19 @@ class LLMHistoryManager:
         self,
         config: LLMConfig,
         client: Union[openai.AsyncClient, openai.OpenAI],
-        system_prompt: str = "You are a helpful assistant that summarizes a succession of events and interactions accurately and concisely. You are watching a robot named **** interact with people and the world. Your goal is to help **** remember what the robot felt, saw, and heard, and how the robot responded to those inputs.",
-        summary_command: str = "\nConsidering the new information, write an updated summary of the situation for ****. Emphasize information that **** needs to know to respond to people and situations in the best possible and most compelling way.",
+        system_prompt: str = (
+            "You are a helpful assistant that summarizes a succession of events "
+            "and interactions accurately and concisely. You are watching a robot "
+            "named **** interact with people and the world. Your goal is to help "
+            "**** remember what the robot felt, saw, and heard, and how the robot "
+            "responded to those inputs."
+        ),
+        summary_command: str = (
+            "\nConsidering the new information, write an updated summary of the "
+            "situation for ****. Emphasize information that **** needs to know to "
+            "respond to people and situations in the best possible and most "
+            "compelling way."
+        ),
     ):
         """
         Initialize the LLMHistoryManager.

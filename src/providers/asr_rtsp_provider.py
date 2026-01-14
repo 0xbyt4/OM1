@@ -10,11 +10,12 @@ from .singleton import singleton
 @singleton
 class ASRRTSPProvider:
     """
-    Audio Speech Recognition Provider that handles RTSP audio streaming and websocket communication.
+    Audio Speech Recognition Provider that handles RTSP audio streaming
+    and websocket communication.
 
-    This class implements a singleton pattern to manage audio input streaming and websocket
-    communication for speech recognition services. It runs in a separate thread to handle
-    continuous audio processing.
+    This class implements a singleton pattern to manage audio input streaming
+    and websocket communication for speech recognition services.
+    It runs in a separate thread to handle continuous audio processing.
     """
 
     def __init__(
@@ -40,7 +41,8 @@ class ASRRTSPProvider:
         chunk : int
             The audio chunk size for the audio stream; used the 200ms default if None
         language_code : str
-            The language code for language in the audio stream; used the en-US default if None
+            The language code for language in the audio stream;
+            used the en-US default if None
         enable_tts_interrupt : bool
             If True, enables TTS interrupt.
         """
@@ -88,7 +90,8 @@ class ASRRTSPProvider:
         """
         Stop the ASR provider.
 
-        Stops the audio stream and websocket clients, and sets the running state to False.
+        Stops the audio stream and websocket clients,
+        and sets the running state to False.
         """
         if not self.running:
             logging.warning("ASR RTSP provider is not running")

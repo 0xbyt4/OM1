@@ -377,7 +377,8 @@ class IOProvider:
     @contextmanager
     def mode_transition_input(self):
         """
-        Context manager for providing mode transition input that automatically resets after use.
+        Context manager for providing mode transition input.
+        Automatically resets after use.
 
         Yields
         ------

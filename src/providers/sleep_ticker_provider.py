@@ -8,7 +8,8 @@ from .singleton import singleton
 @singleton
 class SleepTickerProvider:
     """
-    A singleton provider for managing asynchronous sleep operations with cancellation support.
+    A singleton provider for managing asynchronous sleep operations
+    with cancellation support.
 
     This class provides a thread-safe way to manage sleep operations that can be
     skipped/cancelled. It uses a lock mechanism to ensure thread safety when
