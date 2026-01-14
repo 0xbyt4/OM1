@@ -181,13 +181,16 @@ class RPLidarProvider:
         machine_type: str = "go2",
         use_zenoh: bool = False,
         simple_paths: bool = False,
-        rplidar_config: RPLidarConfig = RPLidarConfig(),
+        rplidar_config: Optional[RPLidarConfig] = None,
         log_file: bool = False,
     ):
         """
         Robot and sensor configuration.
         """
         logging.info("Booting RPLidar")
+
+        if rplidar_config is None:
+            rplidar_config = RPLidarConfig()
 
         self.serial_port = serial_port
         self.half_width_robot = half_width_robot
