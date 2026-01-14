@@ -73,5 +73,6 @@ class UnitreeG1Locations(Background[UnitreeG1LocationsConfig]):
         )
         self.locations_provider.start()
         logging.info(
-            f"G1 Locations Provider initialized in background (base_url: {base_url}, refresh: {refresh_interval}s)"
+            f"G1 Locations Provider initialized in background "
+            f"(base_url: {base_url}, refresh: {refresh_interval}s)"
         )

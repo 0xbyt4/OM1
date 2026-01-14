@@ -50,12 +50,13 @@ class Odom(Background[OdomConfig]):
         Parameters
         ----------
         config : OdomConfig
-            Configuration object for the odometry background task. The configuration
-            specifies the connection method (Zenoh or Unitree Ethernet) and
-            required connection parameters (URID for Zenoh, ethernet channel for Unitree).
-            If use_zenoh is True, the provider will subscribe to odometry data via Zenoh
-            using the specified URID. If use_zenoh is False and unitree_ethernet is provided,
-            the provider will connect directly to Unitree hardware via Ethernet.
+            Configuration object for the odometry background task. The
+            configuration specifies the connection method (Zenoh or Unitree
+            Ethernet) and required connection parameters (URID for Zenoh,
+            ethernet channel for Unitree). If use_zenoh is True, the provider
+            will subscribe to odometry data via Zenoh using the specified URID.
+            If use_zenoh is False and unitree_ethernet is provided, the provider
+            will connect directly to Unitree hardware via Ethernet.
         """
         super().__init__(config)
 

@@ -56,5 +56,6 @@ class UnitreeGo2Locations(Background[UnitreeGo2LocationsConfig]):
         self.locations_provider.start()
 
         logging.info(
-            f"Locations Provider initialized in background (base_url: {base_url}, refresh: {refresh_interval}s)"
+            f"Locations Provider initialized in background "
+            f"(base_url: {base_url}, refresh: {refresh_interval}s)"
         )

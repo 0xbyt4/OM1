@@ -159,8 +159,9 @@ class RFmapper(Background[RFmapperConfig]):
             if advdata.service_uuids:
                 service_uuid = advdata.service_uuids[0]
 
-            # we want to update everything EXCEPT we do not want to overwrite a resolved name
-            # and we do not want to replace a long mfgval with a short one
+            # we want to update everything EXCEPT we do not want to overwrite
+            # a resolved name and we do not want to replace a long mfgval
+            # with a short one
             # we also want to update the TX power if we receive those data
             rssi = advdata.rssi
             tx_power = advdata.tx_power
