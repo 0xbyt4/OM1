@@ -48,12 +48,9 @@ async def start_nav2_hook(context: Dict[str, Any]):
                         error_info = await response.json()
                     except Exception as _:
                         error_info = {"message": "Unknown error"}
-                    logging.error(
-                        f"Failed to start Nav2: {error_info.get('message', 'Unknown error')}"
-                    )
-                    raise Exception(
-                        f"Failed to start Nav2: {error_info.get('message', 'Unknown error')}"
-                    )
+                    err_msg = error_info.get("message", "Unknown error")
+                    logging.error(f"Failed to start Nav2: {err_msg}")
+                    raise Exception(f"Failed to start Nav2: {err_msg}")
 
     except aiohttp.ClientError as e:
         logging.error(f"Error calling Nav2 API: {str(e)}")
@@ -95,12 +92,9 @@ async def stop_nav2_hook(context: Dict[str, Any]):
                         error_info = await response.json()
                     except Exception as _:
                         error_info = {"message": "Unknown error"}
-                    logging.error(
-                        f"Failed to start Nav2: {error_info.get('message', 'Unknown error')}"
-                    )
-                    raise Exception(
-                        f"Failed to start Nav2: {error_info.get('message', 'Unknown error')}"
-                    )
+                    err_msg = error_info.get("message", "Unknown error")
+                    logging.error(f"Failed to start Nav2: {err_msg}")
+                    raise Exception(f"Failed to start Nav2: {err_msg}")
 
     except aiohttp.ClientError as e:
         logging.error(f"Error calling Nav2 API: {str(e)}")
