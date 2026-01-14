@@ -86,12 +86,12 @@ def modes(config_name: str) -> None:
                 print(f"  Cooldown: {rule.cooldown_seconds}s")
             print()
 
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         logging.error(f"Configuration file not found: {config_name}.json5")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
     except Exception as e:
         logging.error(f"Error loading mode configuration: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -204,7 +204,7 @@ def validate_config(
         except ValueError as e:
             print("Error: Invalid JSON5 syntax")
             print(f"   {e}")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
         if verbose:
             print("JSON5 syntax valid")
@@ -261,7 +261,7 @@ def validate_config(
     except FileNotFoundError as e:
         print("Error: Configuration file not found")
         print(f"   {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     except ValueError as e:
         if "Component validation" in str(e):
@@ -272,7 +272,7 @@ def validate_config(
             if verbose:
 
                 traceback.print_exc()
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     except ValidationError as e:
         print("Error: Schema validation failed")
@@ -282,7 +282,7 @@ def validate_config(
         if verbose and e.schema:
             print("\n   Schema requirement:")
             print(f"   {e.schema}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     except Exception as e:
         if "Component validation" not in str(e):
@@ -291,7 +291,7 @@ def validate_config(
             if verbose:
 
                 traceback.print_exc()
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 def _resolve_config_path(config_name: str) -> str:

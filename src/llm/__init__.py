@@ -230,11 +230,11 @@ def get_llm_class(class_name: str) -> T.Type[LLM]:
         return llm_class
 
     except ImportError as e:
-        raise ValueError(f"Could not import LLM module '{module_name}': {e}")
-    except AttributeError:
+        raise ValueError(f"Could not import LLM module '{module_name}': {e}") from e
+    except AttributeError as e:
         raise ValueError(
             f"Class '{class_name}' not found in LLM module '{module_name}'"
-        )
+        ) from e
 
 
 def load_llm(
@@ -294,8 +294,8 @@ def load_llm(
         return llm_class(config=config, available_actions=available_actions)
 
     except ImportError as e:
-        raise ValueError(f"Could not import LLM module '{module_name}': {e}")
-    except AttributeError:
+        raise ValueError(f"Could not import LLM module '{module_name}': {e}") from e
+    except AttributeError as e:
         raise ValueError(
             f"Class '{class_name}' not found in LLM module '{module_name}'"
-        )
+        ) from e

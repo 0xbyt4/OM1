@@ -165,7 +165,7 @@ class RPDriver(object):
         except serial.SerialException as err:
             raise RPLidarException(
                 "Failed to connect to the sensor " "due to: %s" % err
-            )
+            ) from err
 
     def disconnect(self):
         """Disconnects from the serial port."""

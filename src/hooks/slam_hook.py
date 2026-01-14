@@ -46,11 +46,11 @@ async def start_slam_hook(context: Dict[str, Any]):
                     )
                     raise Exception(
                         f"Failed to start SLAM: {error_info.get('message', 'Unknown error')}"
-                    )
+                    ) from None
 
     except aiohttp.ClientError as e:
         logging.error(f"Error calling SLAM API: {str(e)}")
-        raise Exception(f"Error calling SLAM API: {str(e)}")
+        raise Exception(f"Error calling SLAM API: {str(e)}") from e
 
 
 async def stop_slam_hook(context: Dict[str, Any]):
@@ -99,7 +99,7 @@ async def stop_slam_hook(context: Dict[str, Any]):
                     )
                     raise Exception(
                         f"Failed to save SLAM map: {error_info.get('message', 'Unknown error')}"
-                    )
+                    ) from None
 
             # Stop the SLAM process
             async with session.post(
@@ -128,8 +128,8 @@ async def stop_slam_hook(context: Dict[str, Any]):
                     )
                     raise Exception(
                         f"Failed to stop SLAM: {error_info.get('message', 'Unknown error')}"
-                    )
+                    ) from None
 
     except aiohttp.ClientError as e:
         logging.error(f"Error calling SLAM API: {str(e)}")
-        raise Exception(f"Error calling SLAM API: {str(e)}")
+        raise Exception(f"Error calling SLAM API: {str(e)}") from e

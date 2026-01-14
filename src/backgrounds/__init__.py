@@ -106,8 +106,10 @@ def load_background(background_config: T.Dict[str, T.Any]) -> Background:
         return background_class(config=config)
 
     except ImportError as e:
-        raise ValueError(f"Could not import background module '{module_name}': {e}")
-    except AttributeError:
+        raise ValueError(
+            f"Could not import background module '{module_name}': {e}"
+        ) from e
+    except AttributeError as e:
         raise ValueError(
             f"Class '{class_name}' not found in background module '{module_name}'"
-        )
+        ) from e

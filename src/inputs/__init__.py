@@ -103,8 +103,8 @@ def load_input(input_config: T.Dict[str, T.Any]) -> Sensor:
         return input_class(config=config)
 
     except ImportError as e:
-        raise ValueError(f"Could not import input module '{module_name}': {e}")
-    except AttributeError:
+        raise ValueError(f"Could not import input module '{module_name}': {e}") from e
+    except AttributeError as e:
         raise ValueError(
             f"Class '{class_name}' not found in input module '{module_name}'"
-        )
+        ) from e

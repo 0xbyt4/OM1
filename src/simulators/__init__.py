@@ -84,11 +84,13 @@ def get_simulator_class(class_name: str) -> T.Type[Simulator]:
         return simulator_class
 
     except ImportError as e:
-        raise ValueError(f"Could not import simulator module '{module_name}': {e}")
-    except AttributeError:
+        raise ValueError(
+            f"Could not import simulator module '{module_name}': {e}"
+        ) from e
+    except AttributeError as e:
         raise ValueError(
             f"Class '{class_name}' not found in simulator module '{module_name}'"
-        )
+        ) from e
 
 
 def load_simulator(simulator_config: T.Dict[str, T.Any]) -> Simulator:
@@ -147,8 +149,10 @@ def load_simulator(simulator_config: T.Dict[str, T.Any]) -> Simulator:
         return simulator_class(config=config)
 
     except ImportError as e:
-        raise ValueError(f"Could not import simulator module '{module_name}': {e}")
-    except AttributeError:
+        raise ValueError(
+            f"Could not import simulator module '{module_name}': {e}"
+        ) from e
+    except AttributeError as e:
         raise ValueError(
             f"Class '{class_name}' not found in simulator module '{module_name}'"
-        )
+        ) from e

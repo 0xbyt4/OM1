@@ -53,11 +53,11 @@ async def start_nav2_hook(context: Dict[str, Any]):
                     )
                     raise Exception(
                         f"Failed to start Nav2: {error_info.get('message', 'Unknown error')}"
-                    )
+                    ) from None
 
     except aiohttp.ClientError as e:
         logging.error(f"Error calling Nav2 API: {str(e)}")
-        raise Exception(f"Error calling Nav2 API: {str(e)}")
+        raise Exception(f"Error calling Nav2 API: {str(e)}") from e
 
 
 async def stop_nav2_hook(context: Dict[str, Any]):
@@ -100,8 +100,8 @@ async def stop_nav2_hook(context: Dict[str, Any]):
                     )
                     raise Exception(
                         f"Failed to start Nav2: {error_info.get('message', 'Unknown error')}"
-                    )
+                    ) from None
 
     except aiohttp.ClientError as e:
         logging.error(f"Error calling Nav2 API: {str(e)}")
-        raise Exception(f"Error calling Nav2 API: {str(e)}")
+        raise Exception(f"Error calling Nav2 API: {str(e)}") from e

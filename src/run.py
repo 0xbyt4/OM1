@@ -129,12 +129,12 @@ def start(
 
         asyncio.run(runtime.run())
 
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         logging.error(f"Configuration file not found: {config_path}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
     except Exception as e:
         logging.error(f"Error loading configuration: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 if __name__ == "__main__":

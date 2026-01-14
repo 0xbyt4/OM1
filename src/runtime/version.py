@@ -59,8 +59,8 @@ def is_version_supported(version: Optional[str]) -> bool:
 
         return True
 
-    except (ValueError, IndexError):
-        raise ValueError("Invalid version format")
+    except (ValueError, IndexError) as e:
+        raise ValueError("Invalid version format") from e
 
 
 def verify_runtime_version(
@@ -100,7 +100,7 @@ def verify_runtime_version(
         logging.error(f"Version compatibility check failed for {config_name}: {e}")
         raise ValueError(
             f"Configuration version '{config_version}' is incompatible with runtime version '{runtime_version}': {e}"
-        )
+        ) from e
     except Exception as e:
         logging.error(
             f"Unexpected error during version verification for {config_name}: {e}"
