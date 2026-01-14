@@ -112,7 +112,8 @@ def load_action(
 
     if connector_class is None:
         raise ValueError(
-            f"No connector found for action {action_config['name']} connector {action_config['connector']}"
+            f"No connector found for action {action_config['name']} "
+            f"connector {action_config['connector']}"
         )
 
     if config_class is not None:

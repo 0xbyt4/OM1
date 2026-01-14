@@ -90,7 +90,8 @@ class MoveZenohRemoteConnector(ActionConnector[MoveZenohRemoteConfig, MoveInput]
             )
             self.session.put(self.cmd_vel, t.serialize())
             logging.info(
-                f"Published command: {command_status.to_dict()} - latency: {(time.time() - float(command_status.timestamp)):.3f} seconds"
+                f"Published command: {command_status.to_dict()} - latency: "
+                f"{(time.time() - float(command_status.timestamp)):.3f} seconds"
             )
         except Exception as e:
             logging.error(f"Error processing message: {e}")

@@ -108,7 +108,8 @@ class ActionOrchestrator:
         Returns
         -------
         tuple[list[T.Any], list[asyncio.Task[T.Any]]]
-            A tuple containing a list of completed promise results and a list of pending promise tasks.
+            A tuple containing a list of completed promise results and a list
+            of pending promise tasks.
         """
         if not self.promise_queue:
             return [], []
@@ -330,7 +331,8 @@ class ActionOrchestrator:
             The result of the action execution.
         """
         logging.debug(
-            f"Calling action {agent_action.llm_label} with type {action.type.lower()} and argument {action.value}"
+            f"Calling action {agent_action.llm_label} with type "
+            f"{action.type.lower()} and argument {action.value}"
         )
         input_interface = T.get_type_hints(agent_action.interface)["input"](
             **{"action": action.value}

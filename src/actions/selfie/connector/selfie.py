@@ -190,7 +190,8 @@ class SelfieConnector(ActionConnector[SelfieConfig, SelfieInput]):
         Parameters
         ----------
         output_interface : SelfieInput
-            The selfie action interface containing parameters like `id` and `timeout_sec`.
+            The selfie action interface containing parameters like `id` and
+            `timeout_sec`.
         """
         name = (output_interface.action or "").strip()
         timeout_sec = int(output_interface.timeout_sec or self.default_timeout)
@@ -222,7 +223,8 @@ class SelfieConnector(ActionConnector[SelfieConfig, SelfieInput]):
                     time.time(),
                 )
                 self.evelenlabs_tts_provider.add_pending_message(
-                    f"Woof! Woof! I saw {faces} faces. Please make sure only your face is visible and try again."
+                    f"Woof! Woof! I saw {faces} faces. Please make sure only "
+                    "your face is visible and try again."
                 )
                 return
 

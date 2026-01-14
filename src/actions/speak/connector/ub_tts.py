@@ -96,7 +96,8 @@ class UbTtsConnector(ActionConnector[UbTtsConfig, SpeakInput]):
 
         # Call the provider's speak method using data from SpeakInput.
         # The text comes from the 'action' field.
-        # 'interrupt' and 'timestamp' use default values since they are not in SpeakInput.
+        # 'interrupt' and 'timestamp' use default values since they are not
+        # in SpeakInput.
         self.tts.speak(
             tts=output_interface.action,
             interrupt=True,

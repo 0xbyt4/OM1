@@ -1,5 +1,7 @@
 """
-This only works if you actually have a serial port connected to your computer, such as, via a USB serial dongle. On Mac, you can determine the correct name to use via `ls /dev/cu.usb*`.
+This only works if you actually have a serial port connected to your
+computer, such as, via a USB serial dongle. On Mac, you can determine
+the correct name to use via `ls /dev/cu.usb*`.
 """
 
 import logging
@@ -19,12 +21,16 @@ class MoveSerialConfig(ActionConfig):
     Parameters
     ----------
     port : str
-        The serial port to connect to the Arduino (e.g., COM3 or /dev/cu.usbmodem14101). Leave empty to simulate.
+        The serial port to connect to the Arduino
+        (e.g., COM3 or /dev/cu.usbmodem14101). Leave empty to simulate.
     """
 
     port: str = Field(
         default="",
-        description="The serial port to connect to the Arduino (e.g., COM3 or /dev/cu.usbmodem14101). Leave empty to simulate.",
+        description=(
+            "The serial port to connect to the Arduino "
+            "(e.g., COM3 or /dev/cu.usbmodem14101). Leave empty to simulate."
+        ),
     )
 
 

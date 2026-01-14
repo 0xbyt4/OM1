@@ -9,22 +9,22 @@ from ..interface import MoveToPeerAction, MoveToPeerInput
 
 
 class MoveToPeerRos2Connector(ActionConnector[ActionConfig, MoveToPeerInput]):
-    """ROS 2 connector that turns toward the closest peer first, then drives.
+    """ROS 2 connector that turns toward the closest peer first, then drives.
 
     The algorithm:
     1. Retrieve current latitude/longitude (self) and closest‑peer lat/lon from
        IOProvider dynamic variables (populated by `GPSMagSerialReader`).
     2. Retrieve current yaw (° clockwise from geographic North) if available.
     3. Compute bearing from current position to peer (° clockwise from North).
-    4. Compute heading error = (bearing − yaw) ∈ (‑180°, +180°].
-    5. If the error is above a configurable tolerance (default ≈ 5 deg),
+    4. Compute heading error = (bearing − yaw) ∈ (‑180°, +180°].
+    5. If the error is above a configurable tolerance (default ≈ 5 deg),
        rotate in place until within tolerance.
-    6. Drive straight toward the peer until the separation < `STOP_DIST` m.
+    6. Drive straight toward the peer until the separation < `STOP_DIST` m.
 
     All velocities are commanded in the body frame using Unitree's SportClient.
     """
 
-    MAX_ROT_SPEED = 0.2  # rad/s (≈ 11.4 deg/s)
+    MAX_ROT_SPEED = 0.2  # rad/s (≈ 11.4 deg/s)
     FWD_SPEED = 0.4  # m/s forward once aligned
     ANG_TOL_DEG = 5.0  # degrees, acceptable pointing error
     STOP_DIST = 4.0  # metres to stop in front of peer
@@ -85,7 +85,8 @@ class MoveToPeerRos2Connector(ActionConnector[ActionConfig, MoveToPeerInput]):
 
         if distance < self.STOP_DIST:
             logging.info(
-                f"MoveToPeer: already near peer (d={distance:.1f} m < {self.STOP_DIST} m)."
+                f"MoveToPeer: already near peer "
+                f"(d={distance:.1f} m < {self.STOP_DIST} m)."
             )
             return
 
@@ -104,16 +105,17 @@ class MoveToPeerRos2Connector(ActionConnector[ActionConfig, MoveToPeerInput]):
         # heading error – positive → need CW rotation
         heading_err = ((bearing_deg - yaw_deg + 180.0) % 360.0) - 180.0  # -> (‑180,180]
         logging.info(
-            f"MoveToPeer: bearing={bearing_deg:.1f}°, yaw={yaw_deg:.1f}°, error={heading_err:.1f}°"
+            f"MoveToPeer: bearing={bearing_deg:.1f}°, yaw={yaw_deg:.1f}°, "
+            f"error={heading_err:.1f}°"
         )
 
         if abs(heading_err) > self.ANG_TOL_DEG:
             yaw_rate = math.copysign(self.MAX_ROT_SPEED, -heading_err)
-            logging.info(f"MoveToPeer: rotating in place at {yaw_rate:.2f} rad/s")
+            logging.info(f"MoveToPeer: rotating in place at {yaw_rate:.2f} rad/s")
             self.sport_client.Move(0.0, 0.0, yaw_rate)
             # give the robot time to rotate a bit before this action returns
             await asyncio.sleep(0.5)
             return  # caller may schedule subsequent actions for refinement
 
-        logging.info(f"MoveToPeer: aligned → driving forward {self.FWD_SPEED} m/s")
+        logging.info(f"MoveToPeer: aligned → driving forward {self.FWD_SPEED} m/s")
         self.sport_client.Move(self.FWD_SPEED, 0.0, 0.0)

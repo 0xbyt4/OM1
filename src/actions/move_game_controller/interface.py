@@ -23,9 +23,10 @@ class GameController(Interface[IDLEInput, IDLEInput]):
     """
     This action allows manual control of Unitree GO2 robots using game controllers.
 
-    Effect: Enables teleoperation through physical game controllers (Xbox Wireless Controller,
-    Sony DualSense, or Sony DualSense Edge). D-pad controls movement (forward/backward/left/right),
-    triggers control rotation (clockwise/counter-clockwise), and face buttons control stance
+    Effect: Enables teleoperation through physical game controllers
+    (Xbox Wireless Controller, Sony DualSense, or Sony DualSense Edge).
+    D-pad controls movement (forward/backward/left/right), triggers control
+    rotation (clockwise/counter-clockwise), and face buttons control stance
     (stand up/sit down).
 
     Note: This connector has been deprecated. The OM1 Orchestrator now automatically

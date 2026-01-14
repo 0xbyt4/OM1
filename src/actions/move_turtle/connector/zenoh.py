@@ -363,7 +363,7 @@ class MoveZenohConnector(ActionConnector[MoveZenohConfig, MoveInput]):
                     logging.debug("Phase 1 - Gap is decreasing, using smaller steps")
                     self.movement_attempts += 1
                     # rotate only because we are so close
-                    # no need to check barriers because we are just performing small rotations
+                    # no need to check barriers - just performing small rotations
                     if gap > 0:
                         self.move(0, 0.2)
                     elif gap < 0:
@@ -412,7 +412,8 @@ class MoveZenohConnector(ActionConnector[MoveZenohConfig, MoveInput]):
                         self.move(-1 * fb * 0.1, 0.0)
                 else:
                     logging.info(
-                        "advance is completed, gap is small enough, done, pop 1 off queue"
+                        "advance is completed, gap is small enough, done, "
+                        "pop 1 off queue"
                     )
                     self.pending_movements.get()
 

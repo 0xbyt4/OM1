@@ -220,7 +220,8 @@ class SpeakElevenLabsTTSConnector(
         ):
             self.silence_counter += 1
             logging.info(
-                f"Skipping TTS due to silence_rate {self.silence_rate}, counter {self.silence_counter}"
+                f"Skipping TTS due to silence_rate {self.silence_rate}, "
+                f"counter {self.silence_counter}"
             )
             return
 

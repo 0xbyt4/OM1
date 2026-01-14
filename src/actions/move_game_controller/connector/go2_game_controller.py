@@ -5,12 +5,12 @@ from typing import Optional
 
 import zenoh
 from pydantic import Field
+from unitree.unitree_sdk2py.go2.sport.sport_client import SportClient
 
 from actions.base import ActionConfig, ActionConnector
 from actions.move_game_controller.interface import IDLEInput
 from providers.odom_provider import OdomProvider, RobotState
 from providers.unitree_go2_state_provider import UnitreeGo2StateProvider
-from unitree.unitree_sdk2py.go2.sport.sport_client import SportClient
 from zenoh_msgs import AudioStatus, open_zenoh_session
 
 try:
@@ -66,7 +66,8 @@ class Go2GameControllerConnector(ActionConnector[Go2GameControllerConfig, IDLEIn
     """
     Game controller for Unitree Go2 robots.
 
-    NOTE: This connector has been deprecated. OM1 Orchestrator docker automatically supports game controller.
+    NOTE: This connector has been deprecated. OM1 Orchestrator docker
+    automatically supports game controller.
     """
 
     def __init__(self, config: Go2GameControllerConfig):
@@ -167,7 +168,8 @@ class Go2GameControllerConnector(ActionConnector[Go2GameControllerConfig, IDLEIn
                     try:
                         self.gamepad = hid.Device(vendor_id, product_id)
                         logging.info(
-                            f"Connected {device['product_string']} {vendor_id} {product_id}"
+                            f"Connected {device['product_string']} "
+                            f"{vendor_id} {product_id}"
                         )
                         self.xbox = True
                         break
@@ -180,7 +182,8 @@ class Go2GameControllerConnector(ActionConnector[Go2GameControllerConfig, IDLEIn
                     try:
                         self.gamepad = hid.Device(vendor_id, product_id)
                         logging.info(
-                            f"Connected {device['product_string']} {vendor_id} {product_id}"
+                            f"Connected {device['product_string']} "
+                            f"{vendor_id} {product_id}"
                         )
                         self.sony_dualsense = True
                         break
@@ -193,7 +196,8 @@ class Go2GameControllerConnector(ActionConnector[Go2GameControllerConfig, IDLEIn
                     try:
                         self.gamepad = hid.Device(vendor_id, product_id)
                         logging.info(
-                            f"Connected {device['product_string']} {vendor_id} {product_id}"
+                            f"Connected {device['product_string']} "
+                            f"{vendor_id} {product_id}"
                         )
                         self.sony_edge = True
                         break
@@ -320,8 +324,9 @@ class Go2GameControllerConnector(ActionConnector[Go2GameControllerConfig, IDLEIn
 
     def tick(self) -> None:
         """
-        Tick function is called periodically to check for input from the Xbox controller.
-        It reads the input from the controller and sends the corresponding commands to the robot.
+        Tick function is called periodically to check for input from the Xbox
+        controller. It reads the input from the controller and sends the
+        corresponding commands to the robot.
 
         Returns
         -------

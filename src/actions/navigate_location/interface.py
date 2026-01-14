@@ -8,8 +8,9 @@ class NavigateLocationInput:
     """
     Input payload for navigating to a stored location.
 
-    CRITICAL: The 'action' field must contain ONLY the location name from the saved locations list.
-    DO NOT include phrases like "go to", "navigate to", "move to", etc.
+    CRITICAL: The 'action' field must contain ONLY the location name from the
+    saved locations list. DO NOT include phrases like "go to", "navigate to",
+    "move to", etc.
 
     Examples (assuming saved locations are: kitchen, sofa, table):
     - User says: "Go to the kitchen" → action = "kitchen"
