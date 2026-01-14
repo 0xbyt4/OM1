@@ -251,6 +251,9 @@ Respond with ONLY a single word: either "A" or "B" for the better response."""
                 extra_body={"chat_template_kwargs": {"enable_thinking": False}},
             )
 
+            if not response.choices:
+                logging.warning("LLM evaluation returned empty choices")
+                return "local"
             content = response.choices[0].message.content
             if content is None:
                 return "local"
