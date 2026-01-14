@@ -56,7 +56,9 @@
 #             self.unitree_go2_location_provider.get_llm_function_mapping()
 #         )
 
-#     async def _execute_function(self, function_name: str, arguments: T.Dict) -> T.Dict:
+#     async def _execute_function(
+#         self, function_name: str, arguments: T.Dict
+#     ) -> T.Dict:
 #         """
 #         Execute a function call using the generated mapping.
 #         Parameters
@@ -81,7 +83,10 @@
 #                 }
 #         except Exception as e:
 #             logging.error(f"Error executing function {function_name}: {e}")
-#             return {"success": False, "message": f"Error executing function: {str(e)}"}
+#             return {
+#                 "success": False,
+#                 "message": f"Error executing function: {str(e)}"
+#             }
 
 #     async def ask(
 #         self, prompt: str, messages: T.List[T.Dict[str, str]] = []
@@ -105,7 +110,8 @@
 #             if self.available_functions:
 #                 prompt += "\n\nAVAILABLE FUNCTIONS:\n"
 #                 for func in self.available_functions.values():
-#                     prompt += f'- {func["function"]["name"]}: {func["function"]["description"]}\n'
+#                     fn = func["function"]
+#                     prompt += f'- {fn["name"]}: {fn["description"]}\n'
 #                 available_locations = (
 #                     self.unitree_go2_location_provider.list_location_names()
 #                 )
@@ -141,7 +147,8 @@
 #                 function_args = json.loads(tool_call.function.arguments)
 
 #                 logging.info(
-#                     f"Function call detected: {function_name} with args {function_args}"
+#                     f"Function call detected: {function_name} "
+#                     f"with args {function_args}"
 #                 )
 #                 function_result = await self._execute_function(
 #                     function_name, function_args
@@ -151,7 +158,8 @@
 #                 prompt += f"\n\nFunction {function_name} returned: {function_result}"
 
 #                 prompt += (
-#                     "\n\nBased on the function result, please provide a final response."
+#                     "\n\nBased on the function result, "
+#                     "please provide a final response."
 #                 )
 
 #             response = await self._client.beta.chat.completions.parse(

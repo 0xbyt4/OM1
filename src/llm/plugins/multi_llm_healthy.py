@@ -93,7 +93,9 @@
 #             if current_qs is not None:
 #                 request["question_state"] = current_qs
 
-#             logging.debug(f"MultiLLMHealthy system_prompt: {request['system_prompt']}")
+#             logging.debug(
+#                 f"MultiLLMHealthy system_prompt: {request['system_prompt']}"
+#             )
 #             logging.debug(f"MultiLLMHealthy inputs: {request['inputs']}")
 #             logging.debug(
 #                 f"MultiLLMHealthy available_actions: {request['available_actions']}"
@@ -107,13 +109,15 @@
 
 #             if response.status_code != 200:
 #                 logging.error(
-#                     f"API request failed with status {response.status_code}: {response.text}"
+#                     f"API request failed with status {response.status_code}: "
+#                     f"{response.text}"
 #                 )
 #                 return None
 
 #             response_json = response.json()
 
-#             if "extra" in response_json and "question_states" in response_json["extra"]:
+#             if ("extra" in response_json
+#                     and "question_states" in response_json["extra"]):
 #                 new_qs = response_json["extra"].get("question_states")
 #                 self.io_provider.add_dynamic_variable("question_states", new_qs)
 

@@ -107,7 +107,8 @@
 #                             if rag_tools:
 #                                 logging.info(f"RAG tools data: {rag_tools}")
 #                                 tools_lines = [
-#                                     "\n\nThe following tools were used to gather this information:"
+#                                     "\n\nThe following tools were used "
+#                                     "to gather this information:"
 #                                 ]
 #                                 tools_lines += [
 #                                     f"- {tool.get('tool_name', 'Unknown tool')}"
@@ -151,7 +152,9 @@
 
 #             logging.debug(f"MultiLLM system_prompt: {request['system_prompt']}")
 #             logging.debug(f"MultiLLM inputs: {request['inputs']}")
-#             logging.debug(f"MultiLLM available_actions: {request['available_actions']}")
+#             logging.debug(
+#                 f"MultiLLM available_actions: {request['available_actions']}"
+#             )
 
 #             response = requests.post(
 #                 self.endpoint,

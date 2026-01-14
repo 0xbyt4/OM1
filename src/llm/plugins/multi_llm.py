@@ -89,7 +89,9 @@
 
 #             logging.debug(f"MultiLLM system_prompt: {request['system_prompt']}")
 #             logging.debug(f"MultiLLM inputs: {request['inputs']}")
-#             logging.debug(f"MultiLLM available_actions: {request['available_actions']}")
+#             logging.debug(
+#                 f"MultiLLM available_actions: {request['available_actions']}"
+#             )
 
 #             response = requests.post(
 #                 self.endpoint,

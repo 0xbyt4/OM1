@@ -38,10 +38,13 @@ def generate_function_schema_from_action(action) -> dict:
     for field_name, field_type in get_type_hints(input_interface).items():
         if isinstance(field_type, type) and issubclass(field_type, Enum):
             enum_values = [v.value for v in field_type]
+            enum_list = ", ".join(enum_values)
             properties[field_name] = {
                 "type": "string",
                 "enum": enum_values,
-                "description": f"The {field_name} to perform. Must be one of: {', '.join(enum_values)}",
+                "description": (
+                    f"The {field_name} to perform. Must be one of: {enum_list}"
+                ),
             }
         elif isinstance(field_type, str):
             properties[field_name] = {

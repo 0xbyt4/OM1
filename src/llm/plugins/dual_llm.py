@@ -109,7 +109,8 @@ class DualLLM(LLM[R]):
         Parameters
         ----------
         config : DualLLMConfig
-            Configuration settings for the Dual LLM, including local and cloud LLM details.
+            Configuration settings for the Dual LLM, including local and
+            cloud LLM details.
         available_actions : list[AgentAction], optional
             List of available actions for function calling.
         """
@@ -223,24 +224,20 @@ class DualLLM(LLM[R]):
                 for a in cloud_entry["result"].actions
             ]
 
-            eval_prompt = f"""You are evaluating two AI responses to determine which better answers the user's question.
-
-Original User Question/Context:
-{prompt[:500]}
-
-Response A (local model):
-{json.dumps(local_actions, indent=2)}
-
-Response B (cloud model):
-{json.dumps(cloud_actions, indent=2)}
-
-Evaluate based on:
-1. Relevance - Which response better addresses the user's question?
-2. Completeness - Does it fully answer what was asked?
-3. Appropriateness - Are the actions suitable for the context?
-4. Quality - Is the content natural and engaging?
-
-Respond with ONLY a single word: either "A" or "B" for the better response."""
+            eval_prompt = (
+                "You are evaluating two AI responses to determine "
+                "which better answers the user's question.\n\n"
+                f"Original User Question/Context:\n{prompt[:500]}\n\n"
+                f"Response A (local model):\n{json.dumps(local_actions, indent=2)}\n\n"
+                f"Response B (cloud model):\n{json.dumps(cloud_actions, indent=2)}\n\n"
+                "Evaluate based on:\n"
+                "1. Relevance - Which response better addresses the user's question?\n"
+                "2. Completeness - Does it fully answer what was asked?\n"
+                "3. Appropriateness - Are the actions suitable for the context?\n"
+                "4. Quality - Is the content natural and engaging?\n\n"
+                "Respond with ONLY a single word: either 'A' or 'B' for the better "
+                "response."
+            )
 
             response = await self._eval_client.chat.completions.create(
                 model=self._eval_model,
@@ -366,7 +363,8 @@ Respond with ONLY a single word: either "A" or "B" for the better response."""
             elif len(in_time) == 1:
                 chosen = list(in_time.values())[0]
                 logging.debug(
-                    f"One LLM responded in time, using its response. {chosen['source']} LLM selected."
+                    f"One LLM responded in time, using its response. "
+                    f"{chosen['source']} LLM selected."
                 )
                 # Cancel the other task
                 for name, task in tasks.items():
@@ -386,7 +384,8 @@ Respond with ONLY a single word: either "A" or "B" for the better response."""
                     )
                     chosen = list(done)[0].result()
                     logging.debug(
-                        f"Using first completed LLM response from {chosen['source']} LLM."
+                        f"Using first completed LLM response from "
+                        f"{chosen['source']} LLM."
                     )
                     for task in rest:
                         task.cancel()

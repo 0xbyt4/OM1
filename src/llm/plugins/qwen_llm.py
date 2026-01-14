@@ -91,8 +91,8 @@ class QwenLLM(LLM[R]):
         """
         Initialize the QwenLLM instance.
 
-        Sets up the async client for the local Qwen model, configures extra body parameters,
-        and initializes the history manager.
+        Sets up the async client for the local Qwen model, configures extra
+        body parameters, and initializes the history manager.
 
         Parameters
         ----------
