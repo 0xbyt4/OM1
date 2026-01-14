@@ -12,7 +12,8 @@ def load_unitree(unitree_ethernet: str):
     Parameters
     ----------
     unitree_ethernet : str
-        Configuration object containing the Unitree Ethernet adapter string, such as "eth0"
+        Configuration object containing the Unitree Ethernet adapter string,
+        such as "eth0"
 
     Returns
     -------

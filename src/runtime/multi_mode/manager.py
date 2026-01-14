@@ -270,7 +270,8 @@ class ModeManager:
                 ) and rule.transition_type == TransitionType.TIME_BASED:
                     if self._can_transition(rule):
                         logging.info(
-                            f"Time-based transition triggered: {self.state.current_mode} -> {rule.to_mode}"
+                            f"Time-based transition triggered: "
+                            f"{self.state.current_mode} -> {rule.to_mode}"
                         )
                         return rule.to_mode
 
@@ -278,7 +279,8 @@ class ModeManager:
 
     async def check_context_aware_transitions(self) -> Optional[str]:
         """
-        Check if any context-aware transitions should be triggered based on current user context.
+        Check if any context-aware transitions should be triggered based on
+        current user context.
 
         Returns
         -------
@@ -302,8 +304,10 @@ class ModeManager:
             matching_rules.sort(key=lambda r: r.priority, reverse=True)
             target_rule = matching_rules[0]
             logging.info(
-                f"Context-aware transition triggered: {self.state.current_mode} -> {target_rule.to_mode} "
-                f"(priority: {target_rule.priority}, conditions: {target_rule.context_conditions})"
+                f"Context-aware transition triggered: "
+                f"{self.state.current_mode} -> {target_rule.to_mode} "
+                f"(priority: {target_rule.priority}, "
+                f"conditions: {target_rule.context_conditions})"
             )
             return target_rule.to_mode
 
@@ -347,7 +351,8 @@ class ModeManager:
             matching_rules.sort(key=lambda r: r.priority, reverse=True)
             best_rule = matching_rules[0]
             logging.info(
-                f"Input-triggered transition: {self.state.current_mode} -> {best_rule.to_mode}"
+                f"Input-triggered transition: "
+                f"{self.state.current_mode} -> {best_rule.to_mode}"
             )
             logging.info(f"Triggered by keywords: {best_rule.trigger_keywords}")
             return best_rule.to_mode
@@ -356,7 +361,8 @@ class ModeManager:
 
     def _can_transition(self, rule: TransitionRule) -> bool:
         """
-        Check if a transition rule can be executed based on cooldowns and other constraints.
+        Check if a transition rule can be executed based on cooldowns
+        and other constraints.
 
         Parameters
         ----------
@@ -443,7 +449,7 @@ class ModeManager:
 
         # Handle different condition types
         if isinstance(expected_value, dict):
-            # Support for complex conditions like {"min": 5, "max": 10} or {"contains": "pattern"}
+            # Complex conditions like {"min": 5, "max": 10} or {"contains": "..."}
             if "min" in expected_value or "max" in expected_value:
                 # Numeric range condition
                 if not isinstance(actual_value, (int, float)):
@@ -529,7 +535,8 @@ class ModeManager:
         async with self._transition_lock:
             if self._is_transitioning:
                 logging.debug(
-                    f"Transition already in progress, skipping transition to {target_mode}"
+                    f"Transition already in progress, "
+                    f"skipping transition to {target_mode}"
                 )
                 return True
 

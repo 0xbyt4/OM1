@@ -99,7 +99,8 @@ def verify_runtime_version(
     except ValueError as e:
         logging.error(f"Version compatibility check failed for {config_name}: {e}")
         raise ValueError(
-            f"Configuration version '{config_version}' is incompatible with runtime version '{runtime_version}': {e}"
+            f"Configuration version '{config_version}' is incompatible with "
+            f"runtime version '{runtime_version}': {e}"
         )
     except Exception as e:
         logging.error(

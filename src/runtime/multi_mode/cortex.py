@@ -80,7 +80,8 @@ class ModeCortexRuntime:
             self.config_path = self.mode_manager._get_runtime_config_path()
             self.last_modified = self._get_file_mtime()
             logging.info(
-                f"Hot-reload enabled for runtime config: {self.config_path} (check interval: {check_interval}s)"
+                f"Hot-reload enabled for runtime config: {self.config_path} "
+                f"(check interval: {check_interval}s)"
             )
 
         # Current runtime components
@@ -156,7 +157,8 @@ class ModeCortexRuntime:
                     self._pending_transition_reason = None
 
                     logging.info(
-                        f"Processing mode transition to: {target_mode} (reason: {transition_reason})"
+                        f"Processing mode transition to: {target_mode} "
+                        f"(reason: {transition_reason})"
                     )
 
                     success = await self.mode_manager._execute_transition(
@@ -180,7 +182,8 @@ class ModeCortexRuntime:
 
     async def _on_mode_transition(self, from_mode: str, to_mode: str):
         """
-        Handle mode transitions by gracefully stopping current components and starting new ones for the target mode.
+        Handle mode transitions by gracefully stopping current components
+        and starting new ones for the target mode.
 
         Parameters
         ----------
@@ -529,7 +532,8 @@ class ModeCortexRuntime:
             self._pending_transition_reason = transition_reason
             self._mode_transition_event.set()
             logging.info(
-                f"Scheduled mode transition to: {new_mode} (reason: {transition_reason})"
+                f"Scheduled mode transition to: {new_mode} "
+                f"(reason: {transition_reason})"
             )
             return
 
@@ -656,7 +660,8 @@ class ModeCortexRuntime:
 
             if current_mode not in new_mode_config.modes:
                 logging.warning(
-                    f"Current mode '{current_mode}' not found in reloaded config, switching to default mode '{new_mode_config.default_mode}'"
+                    f"Current mode '{current_mode}' not found in reloaded config, "
+                    f"switching to default mode '{new_mode_config.default_mode}'"
                 )
                 current_mode = new_mode_config.default_mode
 

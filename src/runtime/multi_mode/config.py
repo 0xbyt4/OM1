@@ -58,13 +58,16 @@ class TransitionRule:
     trigger_keywords : List[str], optional
         Keywords or phrases that can trigger the transition (for input-triggered).
     priority : int, optional
-        Priority of the rule when multiple rules could apply. Higher numbers = higher priority. Defaults to 1.
+        Priority of the rule when multiple rules could apply.
+        Higher numbers = higher priority. Defaults to 1.
     cooldown_seconds : float, optional
         Minimum time in seconds before this rule can trigger again. Defaults to 0.0.
     timeout_seconds : Optional[float], optional
-        For time-based transitions, the time in seconds after which to switch modes. Defaults to None.
+        For time-based transitions, the time in seconds after which
+        to switch modes. Defaults to None.
     context_conditions : Dict, optional
-        Conditions based on context that must be met for the transition. Defaults to empty dict.
+        Conditions based on context that must be met for the transition.
+        Defaults to empty dict.
     """
 
     from_mode: str
@@ -115,7 +118,8 @@ class ModeConfig:
     backgrounds : List[Background], optional
         List of background processes for the mode. Defaults to empty list.
     action_execution_mode : Optional[str], optional
-        Execution mode for actions (e.g., "concurrent", "sequential", "dependencies"). Defaults to concurrent.
+        Execution mode for actions (e.g., "concurrent", "sequential",
+        "dependencies"). Defaults to concurrent.
     action_dependencies : Optional[Dict[str, List[str]]], optional
         Dependencies between actions for execution order. Defaults to None.
     _raw_inputs : List[Dict], optional
@@ -365,7 +369,8 @@ def load_mode_config(
     config_name : str
         Name of the configuration file (without .json5 extension)
     mode_source_path : Optional[str]
-        Optional path to the configuration file. If None, defaults to the config directory.
+        Optional path to the configuration file.
+        If None, defaults to the config directory.
         The path is relative to the ../../../config directory.
 
     Returns

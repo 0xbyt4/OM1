@@ -59,7 +59,8 @@ class CortexRuntime:
         hot_reload : bool
             Whether to enable hot-reload functionality. (default: True)
         check_interval : float
-            Interval in seconds between config file checks for hot-reload. (default: 60.0)
+            Interval in seconds between config file checks for hot-reload.
+            (default: 60.0)
         """
         self.config = config
         self.config_name = config_name
@@ -88,7 +89,8 @@ class CortexRuntime:
             self.config_path = self._create_runtime_config_file()
             self.last_modified = self._get_file_mtime()
             logging.info(
-                f"Hot-reload enabled for runtime config: {self.config_path} (check interval: {check_interval}s)"
+                f"Hot-reload enabled for runtime config: {self.config_path} "
+                f"(check interval: {check_interval}s)"
             )
 
     def _get_runtime_config_path(self) -> str:

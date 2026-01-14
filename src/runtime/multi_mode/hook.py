@@ -164,7 +164,8 @@ class CommandHookHandler(LifecycleHookHandler):
                 return True
             else:
                 logging.error(
-                    f"Hook command failed with code {process.returncode}: {stderr.decode().strip()}"
+                    f"Hook command failed with code {process.returncode}: "
+                    f"{stderr.decode().strip()}"
                 )
                 return False
 
@@ -271,12 +272,14 @@ class FunctionHookHandler(LifecycleHookHandler):
                     if hasattr(module, function_name):
                         func = getattr(module, function_name)
                         logging.debug(
-                            f"Successfully loaded function {function_name} from hooks.{module_name}"
+                            f"Successfully loaded function {function_name} "
+                            f"from hooks.{module_name}"
                         )
                         return func
                     else:
                         logging.error(
-                            f"Function {function_name} found in file but not importable from hooks.{module_name}"
+                            f"Function {function_name} found in file but not "
+                            f"importable from hooks.{module_name}"
                         )
                         return None
 
@@ -290,7 +293,8 @@ class FunctionHookHandler(LifecycleHookHandler):
 
         except Exception as e:
             logging.error(
-                f"Error searching for function {function_name} in module {module_name}: {e}"
+                f"Error searching for function {function_name} "
+                f"in module {module_name}: {e}"
             )
             return None
 
@@ -460,7 +464,8 @@ async def execute_lifecycle_hooks(
                     all_successful = False
                     if hook.on_failure == "abort":
                         logging.error(
-                            "Lifecycle hook failed with abort policy, stopping execution"
+                            "Lifecycle hook failed with abort policy, "
+                            "stopping execution"
                         )
                         return False
                     if hook.on_failure == "ignore":

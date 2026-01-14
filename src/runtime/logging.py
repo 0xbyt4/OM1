@@ -10,7 +10,8 @@ class LoggingConfig:
     """
     Logging configuration for the application.
 
-    This class holds the configuration for logging, including the log level and whether to log to a file.
+    This class holds the configuration for logging, including the log level
+    and whether to log to a file.
 
     Parameters
     ----------

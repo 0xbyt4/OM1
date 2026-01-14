@@ -58,7 +58,8 @@ class RuntimeConfig:
     unitree_ethernet : Optional[str]
         Optional Unitree ethernet port.
     action_execution_mode : Optional[str]
-        Optional action execution mode (e.g., "concurrent", "sequential", "dependencies"). Defaults to "concurrent".
+        Optional action execution mode (e.g., "concurrent", "sequential",
+        "dependencies"). Defaults to "concurrent".
     action_dependencies : Optional[Dict[str, List[str]]]
         Optional mapping of action dependencies.
     """
@@ -105,7 +106,8 @@ def load_config(
     config_name : str
         Name of the configuration file (without .json extension)
     config_source_path : Optional[str]
-        Optional path to the configuration file to load. If not provided, the default path based on config_name will be used.
+        Optional path to the configuration file to load.
+        If not provided, the default path based on config_name will be used.
 
     Returns
     -------
@@ -147,7 +149,8 @@ def load_config(
     g_robot_ip = raw_config.get("robot_ip", None)
     if g_robot_ip is None or g_robot_ip == "" or g_robot_ip == "192.168.0.241":
         logging.warning(
-            "No robot ip found in the configuration file. Checking for backup robot ip in your .env file."
+            "No robot ip found in the configuration file. "
+            "Checking for backup robot ip in your .env file."
         )
         backup_key = os.environ.get("ROBOT_IP")
         g_robot_ip = backup_key
@@ -156,12 +159,14 @@ def load_config(
             logging.info("Success - Found ROBOT_IP in your .env file.")
         else:
             logging.warning(
-                "Could not find robot ip address. Please find your robot IP address and add it to the configuration file or .env file."
+                "Could not find robot ip address. Please find your robot IP "
+                "address and add it to the configuration file or .env file."
             )
     g_api_key = raw_config.get("api_key", None)
     if g_api_key is None or g_api_key == "" or g_api_key == "openmind_free":
         logging.warning(
-            "No API key found in the configuration file. Checking for backup OM_API_KEY in your .env file."
+            "No API key found in the configuration file. "
+            "Checking for backup OM_API_KEY in your .env file."
         )
         backup_key = os.environ.get("OM_API_KEY")
         g_api_key = backup_key
@@ -170,13 +175,15 @@ def load_config(
             logging.info("Success - Found OM_API_KEY in your .env file.")
         else:
             logging.warning(
-                "Could not find any API keys. Please get a free key at portal.openmind.org."
+                "Could not find any API keys. "
+                "Please get a free key at portal.openmind.org."
             )
 
     g_URID = raw_config.get("URID", None)
     if g_URID is None or g_URID == "":
         logging.warning(
-            "No URID found in the configuration file. Multirobot deployments will conflict."
+            "No URID found in the configuration file. "
+            "Multirobot deployments will conflict."
         )
 
     if g_URID == "default":
@@ -187,7 +194,8 @@ def load_config(
             logging.info("Success - Found URID in your .env file.")
         else:
             logging.warning(
-                "Could not find backup URID in your .env file. Using 'default'. Multirobot deployments will conflict."
+                "Could not find backup URID in your .env file. "
+                "Using 'default'. Multirobot deployments will conflict."
             )
 
     g_ut_eth = raw_config.get("unitree_ethernet", None)
