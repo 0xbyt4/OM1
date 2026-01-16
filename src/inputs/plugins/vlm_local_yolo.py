@@ -83,16 +83,28 @@ def set_best_resolution(cap: cv2.VideoCapture, resolutions: List[tuple]) -> tupl
 # Settings > General > AirPlay & Continuity, and turn off Continuity
 def check_webcam(index_to_check):
     """
-    Checks if a webcam is available and returns True if found, False otherwise.
+    Checks if a webcam is available and returns the best resolution if found.
+
+    Parameters
+    ----------
+    index_to_check : int
+        The camera device index to check.
+
+    Returns
+    -------
+    tuple
+        (width, height) of the camera resolution, or (0, 0) if not found.
     """
     cap = cv2.VideoCapture(index_to_check)
     if not cap.isOpened():
         logging.error(f"YOLO did not find cam: {index_to_check}")
+        cap.release()
         return 0, 0
 
     # Set the best available resolution
     width, height = set_best_resolution(cap, RESOLUTIONS)
     logging.info(f"YOLO found cam: {index_to_check} set to {width}{height}")
+    cap.release()
     return width, height
 
 
@@ -161,6 +173,24 @@ class VLM_Local_YOLO(FuserInput[VLM_Local_YOLOConfig, Optional[List]]):
         self.odom_y = 0.0
         self.odom_yaw_0_360 = 0.0
         self.odom_yaw_m180_p180 = 0.0
+
+    def stop(self) -> None:
+        """
+        Stop the YOLO input plugin and release resources.
+
+        Releases the VideoCapture device to prevent resource leaks.
+        This should be called when the plugin is no longer needed.
+        """
+        if self.cap is not None:
+            self.cap.release()
+            self.cap = None
+            logging.info("VLM_Local_YOLO: VideoCapture released")
+
+    def __del__(self) -> None:
+        """
+        Destructor to ensure VideoCapture is released on garbage collection.
+        """
+        self.stop()
 
     def update_filename(self):
         """
