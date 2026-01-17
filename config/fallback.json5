@@ -1,0 +1,81 @@
+{
+  // FallbackLLM Configuration - Automatic failover from cloud to local
+  //
+  // This config demonstrates the FallbackLLM plugin which:
+  //   - Tries primary (cloud) LLM first
+  //   - Falls back to local Ollama on network errors or timeouts
+  //   - Uses exponential backoff for retries
+  //
+  // Prerequisites:
+  //   1. Install Ollama: https://ollama.ai
+  //   2. Start Ollama: ollama serve
+  //   3. Pull a model: ollama pull llama3.2
+
+  version: "v1.0.1",
+  hertz:1,
+  name: "fallback",
+  api_key: "openmind_free",
+  system_prompt_base: "You are a smart, curious, and friendly AI assistant. Your name is IRIS. When you hear something, react naturally with helpful responses. When speaking, use clear and concise language. You respond with one sequence of commands at a time.",
+  system_governance: "Here are the laws that govern your actions. Do not violate these laws.\nFirst Law: A robot cannot harm a human or allow a human to come to harm.\nSecond Law: A robot must obey orders from humans, unless those orders conflict with the First Law.\nThird Law: A robot must protect itself, as long as that protection doesn't conflict with the First or Second Law.",
+  system_prompt_examples: "Here are some examples of interactions you might encounter:\n\n1. If a person asks a question, respond helpfully:\n    Speak: {{'sentence': 'Let me help you with that.'}}\n\n2. If asked to perform an action:\n    Speak: {{'sentence': 'I'll do that right away.'}}",
+  agent_inputs: [
+    {
+      type: "GoogleASRInput",
+      config: {
+        enable_tts_interrupt: true,
+      },
+    },
+  ],
+  simulators: [
+    {
+      type: "WebSim",
+      config: {
+        host: "0.0.0.0",
+        port: 8000,
+        tick_rate: 100,
+        auto_reconnect: true,
+        debug_mode: false,
+      },
+    },
+  ],
+  cortex_llm: {
+    type: "FallbackLLM",
+    config: {
+      agent_name: "IRIS",
+      history_length: 10,
+      // Primary LLM - Cloud (will fail without valid API key)
+      primary_llm_type: "OpenAILLM",
+      primary_llm_config: {
+        model: "gpt-4.1",
+      },
+      // Fallback LLM - Local Ollama
+      fallback_llm_type: "OllamaLLM",
+      fallback_llm_config: {
+        model: "llama3.2",
+        base_url: "http://localhost:11434",
+        temperature: 0.7,
+        num_ctx: 4096,
+        timeout: 120,
+      },
+      // Timeout settings
+      primary_timeout: 10.0,
+      retry_primary_after: 30.0,
+    },
+  },
+  agent_actions: [
+    {
+      name: "speak",
+      llm_label: "speak",
+      implementation: "passthrough",
+      connector: "elevenlabs_tts",
+      config: {
+        enable_tts_interrupt: true,
+      },
+    },
+    {
+      name: "face",
+      llm_label: "emotion",
+      connector: "avatar",
+    },
+  ],
+}
