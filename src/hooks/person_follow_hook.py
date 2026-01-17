@@ -18,9 +18,27 @@ async def start_person_follow_hook(context: Dict[str, Any]) -> Dict[str, Any]:
     context : Dict[str, Any]
         Context dictionary containing configuration parameters.
     """
-    base_url = context.get("person_follow_base_url", PERSON_FOLLOW_BASE_URL)
-    enroll_timeout = context.get("enroll_timeout", 3.0)
-    max_retries = context.get("max_retries", 5)
+    base_url = context.get("person_follow_base_url")
+    if not base_url:
+        base_url = PERSON_FOLLOW_BASE_URL
+
+    enroll_timeout = context.get("enroll_timeout")
+    if enroll_timeout is None:
+        enroll_timeout = 3.0
+    elif enroll_timeout < 0:
+        logging.warning(
+            f"Person Follow: Invalid enroll_timeout={enroll_timeout}, using default 3.0"
+        )
+        enroll_timeout = 3.0
+
+    max_retries = context.get("max_retries")
+    if max_retries is None:
+        max_retries = 5
+    elif max_retries < 0:
+        logging.warning(
+            f"Person Follow: Invalid max_retries={max_retries}, using default 5"
+        )
+        max_retries = 5
 
     elevenlabs_provider = ElevenLabsTTSProvider()
     enroll_url = f"{base_url}/enroll"
@@ -101,7 +119,9 @@ async def stop_person_follow_hook(context: Dict[str, Any]) -> Dict[str, Any]:
     context : Dict[str, Any]
         Context dictionary containing configuration parameters.
     """
-    base_url = context.get("person_follow_base_url", PERSON_FOLLOW_BASE_URL)
+    base_url = context.get("person_follow_base_url")
+    if not base_url:
+        base_url = PERSON_FOLLOW_BASE_URL
     clear_url = f"{base_url}/clear"
 
     try:
