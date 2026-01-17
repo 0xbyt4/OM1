@@ -53,10 +53,12 @@ class TestContextValidation:
             mock_session.get.return_value = mock_get_response
             mock_session_class.return_value = mock_session
 
-            result = await start_person_follow_hook({
-                "enroll_timeout": 0.0,
-                "max_retries": 1,
-            })
+            result = await start_person_follow_hook(
+                {
+                    "enroll_timeout": 0.0,
+                    "max_retries": 1,
+                }
+            )
 
             # Should complete quickly with no tracking
             assert result["status"] == "success"
@@ -87,10 +89,12 @@ class TestContextValidation:
             mock_session_class.return_value = mock_session
 
             with caplog.at_level(logging.WARNING):
-                result = await start_person_follow_hook({
-                    "enroll_timeout": -1.0,
-                    "max_retries": 1,
-                })
+                result = await start_person_follow_hook(
+                    {
+                        "enroll_timeout": -1.0,
+                        "max_retries": 1,
+                    }
+                )
 
             # Should use default and log warning
             assert "Invalid enroll_timeout" in caplog.text
@@ -111,9 +115,11 @@ class TestContextValidation:
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_session_class.return_value = mock_session
 
-            result = await start_person_follow_hook({
-                "max_retries": 0,
-            })
+            result = await start_person_follow_hook(
+                {
+                    "max_retries": 0,
+                }
+            )
 
             # POST should never be called
             mock_session.post.assert_not_called()
@@ -145,9 +151,11 @@ class TestContextValidation:
             mock_session_class.return_value = mock_session
 
             with caplog.at_level(logging.WARNING):
-                result = await start_person_follow_hook({
-                    "max_retries": -5,
-                })
+                result = await start_person_follow_hook(
+                    {
+                        "max_retries": -5,
+                    }
+                )
 
             # Should use default (5) and log warning
             assert "Invalid max_retries" in caplog.text
@@ -177,9 +185,11 @@ class TestContextValidation:
             mock_session.get.return_value = mock_get_response
             mock_session_class.return_value = mock_session
 
-            await start_person_follow_hook({
-                "person_follow_base_url": "",
-            })
+            await start_person_follow_hook(
+                {
+                    "person_follow_base_url": "",
+                }
+            )
 
             # Should use default URL instead of empty
             call_args = str(mock_session.post.call_args)
@@ -207,9 +217,11 @@ class TestContextValidation:
             mock_session.get.return_value = mock_get_response
             mock_session_class.return_value = mock_session
 
-            await start_person_follow_hook({
-                "person_follow_base_url": "http://localhost:8080/",
-            })
+            await start_person_follow_hook(
+                {
+                    "person_follow_base_url": "http://localhost:8080/",
+                }
+            )
 
             # URL will have double slash
             call_args = str(mock_session.post.call_args)
@@ -238,11 +250,13 @@ class TestContextValidation:
             mock_session_class.return_value = mock_session
 
             # None values should use defaults instead of crashing
-            result = await start_person_follow_hook({
-                "person_follow_base_url": None,
-                "enroll_timeout": None,
-                "max_retries": None,
-            })
+            result = await start_person_follow_hook(
+                {
+                    "person_follow_base_url": None,
+                    "enroll_timeout": None,
+                    "max_retries": None,
+                }
+            )
 
             # Should succeed with defaults
             assert result["status"] == "success"
@@ -319,9 +333,7 @@ class TestStartPersonFollowHook:
                 return self.create_mock_response(
                     status=200, json_data={"is_tracked": False}
                 )
-            return self.create_mock_response(
-                status=200, json_data={"is_tracked": True}
-            )
+            return self.create_mock_response(status=200, json_data={"is_tracked": True})
 
         mock_post_response = self.create_mock_response(status=200)
 
@@ -501,6 +513,12 @@ class TestStartPersonFollowHook:
             result = await start_person_follow_hook(context)
 
             assert result["status"] == "success"
+            assert result["is_tracked"] is True
+            # Verify custom URL was actually used
+            post_call_args = str(mock_session.post.call_args)
+            get_call_args = str(mock_session.get.call_args)
+            assert "custom:9999" in post_call_args, "Custom URL not used for POST"
+            assert "custom:9999" in get_call_args, "Custom URL not used for GET"
 
     @pytest.mark.asyncio
     async def test_start_tts_message_on_success(self, mock_elevenlabs):
@@ -708,10 +726,12 @@ class TestStartHookBehaviorCorrectness:
             mock_session_class.return_value = mock_session
 
             max_retries = 3
-            await start_person_follow_hook({
-                "enroll_timeout": 0.1,
-                "max_retries": max_retries,
-            })
+            await start_person_follow_hook(
+                {
+                    "enroll_timeout": 0.1,
+                    "max_retries": max_retries,
+                }
+            )
 
             # Should have called POST exactly max_retries times
             assert post_call_count == max_retries
@@ -749,10 +769,12 @@ class TestStartHookBehaviorCorrectness:
             mock_session.get.side_effect = get_response
             mock_session_class.return_value = mock_session
 
-            result = await start_person_follow_hook({
-                "enroll_timeout": 0.1,
-                "max_retries": 5,
-            })
+            result = await start_person_follow_hook(
+                {
+                    "enroll_timeout": 0.1,
+                    "max_retries": 5,
+                }
+            )
 
             assert result["status"] == "success"
             assert result["is_tracked"] is True
@@ -786,10 +808,12 @@ class TestStartHookBehaviorCorrectness:
             mock_session_class.return_value = mock_session
 
             # Very short timeout for test speed
-            await start_person_follow_hook({
-                "enroll_timeout": 0.2,
-                "max_retries": 2,
-            })
+            await start_person_follow_hook(
+                {
+                    "enroll_timeout": 0.2,
+                    "max_retries": 2,
+                }
+            )
 
             elapsed = time.time() - start_time
             # Should complete in reasonable time (2 retries * 0.2s timeout + overhead)

@@ -170,9 +170,7 @@ class TestConfigValidation:
             PersonFollowingStatusConfig,
         )
 
-        config = PersonFollowingStatusConfig(
-            person_follow_base_url="not-a-valid-url"
-        )
+        config = PersonFollowingStatusConfig(person_follow_base_url="not-a-valid-url")
         status = PersonFollowingStatus(config)
 
         # Currently accepts any string
@@ -205,9 +203,7 @@ class TestConfigValidation:
             PersonFollowingStatusConfig,
         )
 
-        config = PersonFollowingStatusConfig(
-            person_follow_base_url="http://localhost"
-        )
+        config = PersonFollowingStatusConfig(person_follow_base_url="http://localhost")
         status = PersonFollowingStatus(config)
 
         assert status.status_url == "http://localhost/status"
@@ -262,9 +258,7 @@ class TestPersonFollowingStatusInit:
             PersonFollowingStatusConfig,
         )
 
-        config = PersonFollowingStatusConfig(
-            person_follow_base_url="http://test:1234"
-        )
+        config = PersonFollowingStatusConfig(person_follow_base_url="http://test:1234")
         status = PersonFollowingStatus(config)
 
         assert status.base_url == "http://test:1234"
@@ -768,7 +762,9 @@ class TestPersonFollowingStatusFormattedBuffer:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_formatted_buffer_with_message(self, status_instance, mock_io_provider):
+    async def test_formatted_buffer_with_message(
+        self, status_instance, mock_io_provider
+    ):
         """Test formatted_latest_buffer with messages."""
         await status_instance.raw_to_text("Test tracking status")
 
@@ -791,7 +787,9 @@ class TestPersonFollowingStatusFormattedBuffer:
         assert len(status_instance.messages) == 0
 
     @pytest.mark.asyncio
-    async def test_formatted_buffer_io_provider(self, status_instance, mock_io_provider):
+    async def test_formatted_buffer_io_provider(
+        self, status_instance, mock_io_provider
+    ):
         """Test that formatted_latest_buffer calls IOProvider.add_input."""
         await status_instance.raw_to_text("Test message")
 
@@ -842,35 +840,44 @@ class TestStateTransitions:
         5. Person leaves completely -> INACTIVE
         """
         # Step 1: Initial state - INACTIVE, no person
-        result1 = status_instance._format_status({
-            "is_tracked": False,
-            "status": "INACTIVE",
-            "target_track_id": None,
-            "x": 0, "z": 0,
-        })
+        result1 = status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "INACTIVE",
+                "target_track_id": None,
+                "x": 0,
+                "z": 0,
+            }
+        )
         # First call with not tracked and no lost_tracking_time should return None
         assert result1 is None
         assert status_instance._previous_is_tracked is False
 
         # Step 2: Person appears - TRACKING_ACTIVE
-        result2 = status_instance._format_status({
-            "is_tracked": True,
-            "status": "TRACKING_ACTIVE",
-            "target_track_id": 1,
-            "x": 0.5, "z": 2.0,
-        })
+        result2 = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "target_track_id": 1,
+                "x": 0.5,
+                "z": 2.0,
+            }
+        )
         assert result2 is not None
         assert "TRACKING STARTED" in result2
         assert status_instance._previous_is_tracked is True
         assert status_instance._lost_tracking_time is None
 
         # Step 3: Person goes out of frame - SEARCHING
-        result3 = status_instance._format_status({
-            "is_tracked": False,
-            "status": "SEARCHING",
-            "target_track_id": 1,
-            "x": 0, "z": 0,
-        })
+        result3 = status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "SEARCHING",
+                "target_track_id": 1,
+                "x": 0,
+                "z": 0,
+            }
+        )
         # Immediately after losing tracking, should return None (grace period)
         assert result3 is None
         assert status_instance._previous_is_tracked is False
@@ -878,23 +885,29 @@ class TestStateTransitions:
 
         # Step 4: Wait 2+ seconds, then still SEARCHING
         status_instance._lost_tracking_time = time.time() - 3.0
-        result4 = status_instance._format_status({
-            "is_tracked": False,
-            "status": "SEARCHING",
-            "target_track_id": 1,
-            "x": 0, "z": 0,
-        })
+        result4 = status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "SEARCHING",
+                "target_track_id": 1,
+                "x": 0,
+                "z": 0,
+            }
+        )
         assert result4 is not None
         assert "SEARCHING" in result4
         assert status_instance._lost_tracking_announced is True
 
         # Step 5: Person returns - TRACKING_ACTIVE again
-        result5 = status_instance._format_status({
-            "is_tracked": True,
-            "status": "TRACKING_ACTIVE",
-            "target_track_id": 1,
-            "x": 1.0, "z": 3.0,
-        })
+        result5 = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "target_track_id": 1,
+                "x": 1.0,
+                "z": 3.0,
+            }
+        )
         assert result5 is not None
         assert "TRACKING STARTED" in result5
         # State should be reset
@@ -904,22 +917,37 @@ class TestStateTransitions:
     def test_rapid_tracking_toggle(self, status_instance):
         """Test rapid on/off/on tracking doesn't cause issues."""
         # Track
-        status_instance._format_status({
-            "is_tracked": True, "status": "TRACKING_ACTIVE",
-            "target_track_id": 1, "x": 0, "z": 1,
-        })
+        status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "target_track_id": 1,
+                "x": 0,
+                "z": 1,
+            }
+        )
 
         # Lose (immediately)
-        status_instance._format_status({
-            "is_tracked": False, "status": "SEARCHING",
-            "target_track_id": 1, "x": 0, "z": 0,
-        })
+        status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "SEARCHING",
+                "target_track_id": 1,
+                "x": 0,
+                "z": 0,
+            }
+        )
 
         # Regain (within 2 second grace period)
-        result = status_instance._format_status({
-            "is_tracked": True, "status": "TRACKING_ACTIVE",
-            "target_track_id": 1, "x": 0, "z": 1.5,
-        })
+        result = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "target_track_id": 1,
+                "x": 0,
+                "z": 1.5,
+            }
+        )
 
         # Should announce tracking started again
         assert result is not None
@@ -954,12 +982,14 @@ class TestEdgeCases:
         """Test formatting with negative x/z coordinates."""
         status_instance._previous_is_tracked = True
 
-        result = status_instance._format_status({
-            "is_tracked": True,
-            "status": "TRACKING_ACTIVE",
-            "x": -1.5,
-            "z": -2.0,
-        })
+        result = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": -1.5,
+                "z": -2.0,
+            }
+        )
 
         assert result is not None
         assert "-2.0m" in result
@@ -969,12 +999,14 @@ class TestEdgeCases:
         """Test formatting with zero coordinates."""
         status_instance._previous_is_tracked = True
 
-        result = status_instance._format_status({
-            "is_tracked": True,
-            "status": "TRACKING_ACTIVE",
-            "x": 0.0,
-            "z": 0.0,
-        })
+        result = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": 0.0,
+                "z": 0.0,
+            }
+        )
 
         assert result is not None
         assert "0.0m" in result
@@ -983,12 +1015,14 @@ class TestEdgeCases:
         """Test formatting with very large coordinates."""
         status_instance._previous_is_tracked = True
 
-        result = status_instance._format_status({
-            "is_tracked": True,
-            "status": "TRACKING_ACTIVE",
-            "x": 999.999,
-            "z": 1234.5,
-        })
+        result = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": 999.999,
+                "z": 1234.5,
+            }
+        )
 
         assert result is not None
         assert "1234.5m" in result
@@ -998,9 +1032,11 @@ class TestEdgeCases:
         status_instance._previous_is_tracked = False
 
         # Minimal data - only is_tracked
-        result = status_instance._format_status({
-            "is_tracked": True,
-        })
+        result = status_instance._format_status(
+            {
+                "is_tracked": True,
+            }
+        )
 
         assert result is not None
         assert "TRACKING STARTED" in result
@@ -1017,12 +1053,15 @@ class TestEdgeCases:
         assert status_instance._previous_is_tracked is None
         assert status_instance._lost_tracking_time is None
 
-        result = status_instance._format_status({
-            "is_tracked": False,
-            "status": "INACTIVE",
-            "target_track_id": None,
-            "x": 0, "z": 0,
-        })
+        result = status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "INACTIVE",
+                "target_track_id": None,
+                "x": 0,
+                "z": 0,
+            }
+        )
 
         # Should return None - no announcement on first poll
         assert result is None
@@ -1136,6 +1175,7 @@ class TestHasEverTrackedBehavior:
 
         # Get all method source code and check for reads
         import inspect
+
         source = inspect.getsource(status_instance.__class__)
 
         # Count occurrences - verify it's set somewhere
@@ -1144,9 +1184,9 @@ class TestHasEverTrackedBehavior:
 
         # Verify it's not read in any conditional or return statement
         # This documents current behavior - variable is set but never used
-        assert "if self._has_ever_tracked" not in source, (
-            "_has_ever_tracked is now being read - update this test"
-        )
+        assert (
+            "if self._has_ever_tracked" not in source
+        ), "_has_ever_tracked is now being read - update this test"
 
 
 class TestRealisticScenarios:
@@ -1180,33 +1220,53 @@ class TestRealisticScenarios:
         4. Person comes back (z=1, x=0)
         """
         # Person appears
-        r1 = status_instance._format_status({
-            "is_tracked": True, "status": "TRACKING_ACTIVE",
-            "x": 0.0, "z": 2.0, "target_track_id": 1,
-        })
+        r1 = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": 0.0,
+                "z": 2.0,
+                "target_track_id": 1,
+            }
+        )
         assert "TRACKING STARTED" in r1
         assert "2.0m ahead" in r1
 
         # Person moves left
-        r2 = status_instance._format_status({
-            "is_tracked": True, "status": "TRACKING_ACTIVE",
-            "x": -1.0, "z": 2.0, "target_track_id": 1,
-        })
+        r2 = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": -1.0,
+                "z": 2.0,
+                "target_track_id": 1,
+            }
+        )
         assert "TRACKING" in r2
         assert "-1.0m to the side" in r2
 
         # Person moves further
-        r3 = status_instance._format_status({
-            "is_tracked": True, "status": "TRACKING_ACTIVE",
-            "x": -1.0, "z": 4.0, "target_track_id": 1,
-        })
+        r3 = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": -1.0,
+                "z": 4.0,
+                "target_track_id": 1,
+            }
+        )
         assert "4.0m ahead" in r3
 
         # Person comes back close
-        r4 = status_instance._format_status({
-            "is_tracked": True, "status": "TRACKING_ACTIVE",
-            "x": 0.0, "z": 1.0, "target_track_id": 1,
-        })
+        r4 = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": 0.0,
+                "z": 1.0,
+                "target_track_id": 1,
+            }
+        )
         assert "1.0m ahead" in r4
 
     def test_scenario_person_briefly_occluded(self, status_instance):
@@ -1218,35 +1278,55 @@ class TestRealisticScenarios:
         Should NOT announce "SEARCHING" message.
         """
         # Tracking
-        status_instance._format_status({
-            "is_tracked": True, "status": "TRACKING_ACTIVE",
-            "x": 0, "z": 2, "target_track_id": 1,
-        })
+        status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": 0,
+                "z": 2,
+                "target_track_id": 1,
+            }
+        )
 
         # Lost
-        status_instance._format_status({
-            "is_tracked": False, "status": "SEARCHING",
-            "x": 0, "z": 0, "target_track_id": 1,
-        })
+        status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "SEARCHING",
+                "x": 0,
+                "z": 0,
+                "target_track_id": 1,
+            }
+        )
 
         # Simulate 1 second passing (less than 2s threshold)
         status_instance._lost_tracking_time = time.time() - 1.0
 
         # Still searching but within grace period
-        r = status_instance._format_status({
-            "is_tracked": False, "status": "SEARCHING",
-            "x": 0, "z": 0, "target_track_id": 1,
-        })
+        r = status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "SEARCHING",
+                "x": 0,
+                "z": 0,
+                "target_track_id": 1,
+            }
+        )
 
         # Should NOT announce yet
         assert r is None
         assert status_instance._lost_tracking_announced is False
 
         # Re-acquired
-        r2 = status_instance._format_status({
-            "is_tracked": True, "status": "TRACKING_ACTIVE",
-            "x": 0.1, "z": 2.1, "target_track_id": 1,
-        })
+        r2 = status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": 0.1,
+                "z": 2.1,
+                "target_track_id": 1,
+            }
+        )
 
         assert "TRACKING STARTED" in r2
 
@@ -1260,35 +1340,55 @@ class TestRealisticScenarios:
         5. After another 2+ seconds, announce WAITING
         """
         # Tracking
-        status_instance._format_status({
-            "is_tracked": True, "status": "TRACKING_ACTIVE",
-            "x": 0, "z": 2, "target_track_id": 1,
-        })
+        status_instance._format_status(
+            {
+                "is_tracked": True,
+                "status": "TRACKING_ACTIVE",
+                "x": 0,
+                "z": 2,
+                "target_track_id": 1,
+            }
+        )
 
         # Lost
-        status_instance._format_status({
-            "is_tracked": False, "status": "SEARCHING",
-            "x": 0, "z": 0, "target_track_id": 1,
-        })
+        status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "SEARCHING",
+                "x": 0,
+                "z": 0,
+                "target_track_id": 1,
+            }
+        )
 
         # Wait 3 seconds
         status_instance._lost_tracking_time = time.time() - 3.0
 
         # Searching announcement
-        r1 = status_instance._format_status({
-            "is_tracked": False, "status": "SEARCHING",
-            "x": 0, "z": 0, "target_track_id": 1,
-        })
+        r1 = status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "SEARCHING",
+                "x": 0,
+                "z": 0,
+                "target_track_id": 1,
+            }
+        )
         assert "SEARCHING" in r1
         assert status_instance._lost_tracking_announced is True
 
         # System gives up (resets to INACTIVE)
         # This is a NEW state transition - _lost_tracking_announced is already True
         # So it won't announce again
-        r2 = status_instance._format_status({
-            "is_tracked": False, "status": "INACTIVE",
-            "x": 0, "z": 0, "target_track_id": None,
-        })
+        r2 = status_instance._format_status(
+            {
+                "is_tracked": False,
+                "status": "INACTIVE",
+                "x": 0,
+                "z": 0,
+                "target_track_id": None,
+            }
+        )
 
         # Already announced, should be None
         assert r2 is None
