@@ -132,7 +132,8 @@ class FallbackLLMConfig(LLMConfig):
         default=10.0, description="Timeout in seconds for primary LLM calls"
     )
     retry_primary_after: float = Field(
-        default=30.0, description="Seconds to wait before retrying primary after failure"
+        default=30.0,
+        description="Seconds to wait before retrying primary after failure",
     )
 
 
@@ -227,7 +228,11 @@ class FallbackLLM(LLM[R]):
         )
 
     async def _call_with_timeout(
-        self, llm: LLM, prompt: str, messages: T.List[T.Dict[str, T.Any]], timeout: float
+        self,
+        llm: LLM,
+        prompt: str,
+        messages: T.List[T.Dict[str, T.Any]],
+        timeout: float,
     ) -> T.Optional[R]:
         """
         Call an LLM with a timeout.
@@ -310,7 +315,12 @@ class FallbackLLM(LLM[R]):
                     error_msg = str(e).lower()
                     if any(
                         keyword in error_msg
-                        for keyword in ["connection", "timeout", "network", "unreachable"]
+                        for keyword in [
+                            "connection",
+                            "timeout",
+                            "network",
+                            "unreachable",
+                        ]
                     ):
                         logging.warning(f"Primary LLM connection error: {e}")
                         self._network_status.record_failure()

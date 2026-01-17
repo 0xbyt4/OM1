@@ -38,17 +38,14 @@ class TestNetworkStatus:
         status = NetworkStatus(initial_backoff=5.0, max_backoff=300.0)
 
         status.record_failure()
-        expected_backoff_1 = 5.0
-
         status.record_failure()
-        expected_backoff_2 = 10.0
-
         status.record_failure()
-        expected_backoff_3 = 20.0
 
         assert status._consecutive_failures == 3
+        # After 3 failures: 5.0 * (2 ** (3 - 1)) = 20.0
+        expected_backoff = 20.0
         backoff = min(5.0 * (2 ** (3 - 1)), 300.0)
-        assert backoff == expected_backoff_3
+        assert backoff == expected_backoff
 
     def test_max_backoff_cap(self):
         """Backoff should not exceed max_backoff."""
@@ -135,10 +132,11 @@ class TestFallbackLLM:
         """FallbackLLM should initialize both primary and fallback LLMs."""
         config = FallbackLLMConfig()
 
-        llm = FallbackLLM(config=config, available_actions=[])
+        _llm = FallbackLLM(config=config, available_actions=[])
 
         assert mock_llm_classes["load_llm"].call_count == 2
         assert mock_history_manager.called
+        assert _llm is not None
 
     @pytest.mark.asyncio
     async def test_uses_primary_when_online(
@@ -311,8 +309,9 @@ class TestFallbackLLM:
     ):
         """Should pass api_key to primary LLM config."""
         config = FallbackLLMConfig(api_key="test-api-key")
-        llm = FallbackLLM(config=config, available_actions=[])
+        _llm = FallbackLLM(config=config, available_actions=[])
 
         calls = mock_llm_classes["load_llm"].call_args_list
         primary_call = calls[0]
         assert primary_call[0][0]["config"]["api_key"] == "test-api-key"
+        assert _llm is not None
