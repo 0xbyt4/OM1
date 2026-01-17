@@ -308,12 +308,14 @@ class TestStartPersonFollowHook:
         """Test successful tracking after multiple retry attempts."""
         from hooks.person_follow_hook import start_person_follow_hook
 
-        call_count = 0
+        get_call_count = 0
 
         def get_response(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            if call_count < 5:
+            nonlocal get_call_count
+            get_call_count += 1
+            # First 2 GET calls return not tracking, 3rd call succeeds
+            # This simulates: retry 1 fails, retry 2 fails, retry 3 succeeds
+            if get_call_count < 3:
                 return self.create_mock_response(
                     status=200, json_data={"is_tracked": False}
                 )
@@ -336,6 +338,8 @@ class TestStartPersonFollowHook:
             )
 
             assert result["status"] == "success"
+            assert result["is_tracked"] is True
+            assert get_call_count == 3  # Verify tracking achieved on 3rd attempt
 
     @pytest.mark.asyncio
     async def test_start_awaiting_no_tracking(self, mock_elevenlabs):
