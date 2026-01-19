@@ -137,7 +137,6 @@ class DIMOTeslaConnector(ActionConnector[DIMOTeslaConfig, TeslaInput]):
                     return None
 
             if self.vehicle_jwt is not None:
-                # Normalize action to lowercase for case-insensitive comparison
                 action = str(output_interface.action).lower()
 
                 if action == "lock doors":
