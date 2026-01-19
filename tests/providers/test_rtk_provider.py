@@ -1,6 +1,6 @@
 import pytest
 
-from src.providers.rtk_provider import RtkProvider
+from providers.rtk_provider import RtkProvider
 
 
 @pytest.fixture
