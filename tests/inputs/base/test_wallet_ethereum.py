@@ -113,3 +113,51 @@ def test_formatted_latest_buffer_with_message(wallet_eth):
 def test_formatted_latest_buffer_empty(wallet_eth):
     assert wallet_eth.formatted_latest_buffer() is None
     wallet_eth.io_provider.add_input.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_poll_uses_asyncio_to_thread_for_blocking_calls(mock_web3, mock_io_provider):
+    """Test that blocking web3 calls are wrapped in asyncio.to_thread."""
+    with patch.dict("os.environ", {"ETH_ADDRESS": "0xTestAddress"}):
+        with patch("inputs.plugins.wallet_ethereum.asyncio.to_thread") as mock_to_thread:
+            mock_to_thread.side_effect = [12345, 1000000000000000000]
+            mock_web3.from_wei.return_value = 1.0
+
+            wallet = WalletEthereum(config=SensorConfig())
+            wallet.POLL_INTERVAL = 0
+
+            await wallet._poll()
+
+            assert mock_to_thread.call_count == 2, (
+                "Expected 2 asyncio.to_thread calls for block_number and get_balance"
+            )
+
+
+@pytest.mark.asyncio
+async def test_poll_random_debug_eth_addition(wallet_eth, mock_web3):
+    """Test that random ETH is added when dice > 7 for debugging."""
+    mock_web3.eth.block_number = 12345
+    mock_web3.eth.get_balance.return_value = 1000000000000000000
+    mock_web3.from_wei.return_value = 1.0
+
+    with patch("inputs.plugins.wallet_ethereum.random.randint", return_value=8):
+        wallet_eth.POLL_INTERVAL = 0
+        result = await wallet_eth._poll()
+
+        # When dice > 7, 1.0 ETH is added for debugging
+        assert result[0] == 2.0  # 1.0 (real) + 1.0 (debug)
+
+
+@pytest.mark.asyncio
+async def test_poll_exception_handling(wallet_eth, mock_web3, caplog):
+    """Test that exceptions during blockchain queries are logged."""
+    with patch(
+        "inputs.plugins.wallet_ethereum.asyncio.to_thread",
+        side_effect=Exception("Network error"),
+    ):
+        wallet_eth.POLL_INTERVAL = 0
+
+        result = await wallet_eth._poll()
+
+        assert "Error fetching blockchain data: Network error" in caplog.text
+        assert isinstance(result, list)
