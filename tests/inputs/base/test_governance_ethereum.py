@@ -136,8 +136,7 @@ def test_governance_initialization():
     assert governance.rpc_url == "https://holesky.drpc.org"
     assert governance.contract_address == "0xe706b7e30e378b89c7b2ee7bfd8ce2b91959d695"
     assert governance.function_selector == "0x1db3d5ff"
-    assert governance.POLL_INTERVAL == 5
-    # Rules are loaded on first poll, not init
+    assert governance.POLL_INTERVAL == 5.0
     assert governance.universal_rule is None
 
 
@@ -322,6 +321,7 @@ class MockPostContextWithError:
 
 @pytest.mark.asyncio
 async def test_load_rules_handles_client_error():
+    """Test that load_rules_from_blockchain handles aiohttp.ClientError."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     with patch(
@@ -335,6 +335,7 @@ async def test_load_rules_handles_client_error():
 
 @pytest.mark.asyncio
 async def test_load_rules_handles_timeout():
+    """Test that load_rules_from_blockchain handles asyncio.TimeoutError."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     with patch(
@@ -348,6 +349,7 @@ async def test_load_rules_handles_timeout():
 
 @pytest.mark.asyncio
 async def test_load_rules_handles_generic_error():
+    """Test that load_rules_from_blockchain handles generic exceptions."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     with patch(
@@ -361,6 +363,7 @@ async def test_load_rules_handles_generic_error():
 
 @pytest.mark.asyncio
 async def test_poll_handles_exception():
+    """Test that _poll handles exceptions from load_rules_from_blockchain."""
     governance = GovernanceEthereum(config=SensorConfig())
     governance.POLL_INTERVAL = 0.01
 
@@ -376,6 +379,7 @@ async def test_poll_handles_exception():
 
 @pytest.mark.asyncio
 async def test_raw_to_text_with_none():
+    """Test that _raw_to_text returns None when given None input."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     result = await governance._raw_to_text(None)
@@ -384,6 +388,7 @@ async def test_raw_to_text_with_none():
 
 @pytest.mark.asyncio
 async def test_raw_to_text_with_valid_input():
+    """Test that _raw_to_text converts valid input to Message."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     result = await governance._raw_to_text("Test rules")
@@ -394,18 +399,16 @@ async def test_raw_to_text_with_valid_input():
 
 @pytest.mark.asyncio
 async def test_raw_to_text_buffer_management():
+    """Test that raw_to_text manages message buffer correctly."""
     governance = GovernanceEthereum(config=SensorConfig())
 
-    # First message should be added
     await governance.raw_to_text("First rule")
     assert len(governance.messages) == 1
     assert governance.messages[0].message == "First rule"
 
-    # Same message should not be added again
     await governance.raw_to_text("First rule")
     assert len(governance.messages) == 1
 
-    # Different message should be added
     await governance.raw_to_text("Second rule")
     assert len(governance.messages) == 2
     assert governance.messages[1].message == "Second rule"
@@ -413,6 +416,7 @@ async def test_raw_to_text_buffer_management():
 
 @pytest.mark.asyncio
 async def test_raw_to_text_with_none_input():
+    """Test that raw_to_text with None input does not modify messages."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     await governance.raw_to_text(None)
@@ -420,6 +424,7 @@ async def test_raw_to_text_with_none_input():
 
 
 def test_formatted_latest_buffer_empty():
+    """Test that formatted_latest_buffer returns None when messages is empty."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     result = governance.formatted_latest_buffer()
@@ -427,6 +432,7 @@ def test_formatted_latest_buffer_empty():
 
 
 def test_formatted_latest_buffer_with_message():
+    """Test that formatted_latest_buffer returns correctly formatted string."""
     from inputs.base import Message
 
     governance = GovernanceEthereum(config=SensorConfig())
@@ -444,6 +450,7 @@ def test_formatted_latest_buffer_with_message():
 
 
 def test_decode_eth_response_too_short():
+    """Test that decode_eth_response handles too-short hex responses gracefully."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     # Hex response shorter than 128 bytes (required for string_length read at bytes 96-128)
@@ -455,6 +462,7 @@ def test_decode_eth_response_too_short():
 
 
 def test_decode_eth_response_with_control_characters():
+    """Test that decode_eth_response correctly strips unwanted control characters."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     # Build hex with control character \x19 embedded in "Hello\x19World"
@@ -477,6 +485,7 @@ def test_decode_eth_response_with_control_characters():
 
 
 def test_decode_eth_response_without_0x_prefix():
+    """Test that decode_eth_response works with hex strings missing '0x' prefix."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     # Same as valid test but without "0x" prefix
@@ -495,6 +504,7 @@ def test_decode_eth_response_without_0x_prefix():
 
 @pytest.mark.asyncio
 async def test_load_rules_missing_result_key():
+    """Test that load_rules_from_blockchain handles missing 'result' key in response."""
     governance = GovernanceEthereum(config=SensorConfig())
 
     mock_response = MockResponse(
@@ -512,6 +522,7 @@ async def test_load_rules_missing_result_key():
 
 
 def test_formatted_latest_buffer_does_not_clear_messages():
+    """Test that formatted_latest_buffer does not clear messages after formatting."""
     from inputs.base import Message
 
     governance = GovernanceEthereum(config=SensorConfig())
@@ -523,7 +534,6 @@ def test_formatted_latest_buffer_does_not_clear_messages():
     with patch.object(governance.io_provider, "add_input"):
         governance.formatted_latest_buffer()
 
-    # Messages should NOT be cleared (per code comment on line 239)
     assert len(governance.messages) == 2
     assert governance.messages[0].message == "First rule"
     assert governance.messages[1].message == "Second rule"

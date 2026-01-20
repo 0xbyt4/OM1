@@ -32,8 +32,6 @@ class GovernanceEthereum(FuserInput[SensorConfig, Optional[str]]):
         """
         Load governance rules from the Ethereum blockchain.
 
-        Uses aiohttp for non-blocking HTTP requests to avoid blocking the event loop.
-
         Returns
         -------
         Optional[str]
@@ -41,7 +39,6 @@ class GovernanceEthereum(FuserInput[SensorConfig, Optional[str]]):
         """
         logging.info("Loading rules from Ethereum blockchain")
 
-        # Construct JSON-RPC request
         payload = {
             "jsonrpc": "2.0",
             "id": 636815446436324,
@@ -72,7 +69,6 @@ class GovernanceEthereum(FuserInput[SensorConfig, Optional[str]]):
                             hex_response = result["result"]
                             logging.debug(f"Raw blockchain response: {hex_response}")
 
-                            # Decode the response
                             decoded_data = self.decode_eth_response(hex_response)
                             logging.debug(f"Decoded blockchain data: {decoded_data}")
                             return decoded_data
@@ -84,21 +80,24 @@ class GovernanceEthereum(FuserInput[SensorConfig, Optional[str]]):
                         logging.error(
                             f"Error: Blockchain request failed with status {response.status}"
                         )
-
-        except aiohttp.ClientError as e:
-            logging.error(f"HTTP error loading rules from blockchain: {e}")
-        except asyncio.TimeoutError:
-            logging.error("Timeout loading rules from blockchain")
         except Exception as e:
             logging.error(f"Error loading rules from blockchain: {e}")
 
         return None
 
-    def decode_eth_response(self, hex_response):
+    def decode_eth_response(self, hex_response: str) -> Optional[str]:
         """
         Decodes an Ethereum eth_call response.
-        Extracts and decodes a UTF-8 string from ABI-encoded data.
-        Cleans any unwanted control characters.
+
+        Parameters
+        ----------
+        hex_response : str
+            Hexadecimal string response from Ethereum eth_call.
+
+        Returns
+        -------
+        Optional[str]
+            Decoded string, or None on error.
         """
         if hex_response.startswith("0x"):
             hex_response = hex_response[2:]
@@ -137,7 +136,7 @@ class GovernanceEthereum(FuserInput[SensorConfig, Optional[str]]):
         self.descriptor_for_LLM = "Universal Laws"
 
         self.io_provider = IOProvider()
-        self.POLL_INTERVAL: float = 5  # seconds
+        self.POLL_INTERVAL = 5.0  # seconds
         self.rpc_url = "https://holesky.drpc.org"  # Ethereum RPC URL
 
         # The smart contract address of the ERC-7777 Governance Smart Contract
@@ -150,8 +149,6 @@ class GovernanceEthereum(FuserInput[SensorConfig, Optional[str]]):
         # getLatestRuleSetVersion(0x254e2f1e)
         # It's currently = 2
         self.function_argument = "0000000000000000000000000000000000000000000000000000000000000002"  # Argument
-
-        # Rules will be loaded on first poll (async context required)
         self.universal_rule: Optional[str] = None
         self.messages: list[Message] = []
 
