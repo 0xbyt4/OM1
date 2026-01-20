@@ -68,9 +68,7 @@ class WalletEthereum(FuserInput[SensorConfig, List[float]]):
 
         try:
             # Get latest block data (non-blocking)
-            block_number = await asyncio.to_thread(
-                lambda: self.web3.eth.block_number
-            )
+            block_number = await asyncio.to_thread(lambda: self.web3.eth.block_number)
 
             # Get account data (non-blocking)
             balance_wei = await asyncio.to_thread(

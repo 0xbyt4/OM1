@@ -116,21 +116,25 @@ def test_formatted_latest_buffer_empty(wallet_eth):
 
 
 @pytest.mark.asyncio
-async def test_poll_uses_asyncio_to_thread_for_blocking_calls(mock_web3, mock_io_provider):
+async def test_poll_uses_asyncio_to_thread_for_blocking_calls(
+    mock_web3, mock_io_provider
+):
     """Test that blocking web3 calls are wrapped in asyncio.to_thread."""
     with patch.dict("os.environ", {"ETH_ADDRESS": "0xTestAddress"}):
-        with patch("inputs.plugins.wallet_ethereum.asyncio.to_thread") as mock_to_thread:
+        with patch(
+            "inputs.plugins.wallet_ethereum.asyncio.to_thread"
+        ) as mock_to_thread:
             mock_to_thread.side_effect = [12345, 1000000000000000000]
             mock_web3.from_wei.return_value = 1.0
 
             wallet = WalletEthereum(config=SensorConfig())
-            wallet.POLL_INTERVAL = 0
+            wallet.POLL_INTERVAL = 0  # type: ignore[assignment]
 
             await wallet._poll()
 
-            assert mock_to_thread.call_count == 2, (
-                "Expected 2 asyncio.to_thread calls for block_number and get_balance"
-            )
+            assert (
+                mock_to_thread.call_count == 2
+            ), "Expected 2 asyncio.to_thread calls for block_number and get_balance"
 
 
 @pytest.mark.asyncio
