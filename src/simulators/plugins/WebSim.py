@@ -270,7 +270,7 @@ class WebSim(Simulator):
                             }, [isResizing]);
 
                             React.useEffect(() => {
-                                const ws = new WebSocket(`ws://${window.location.host}/ws`);
+                                const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
 
                                 ws.onopen = () => {
                                     console.log('Connected to WebSocket');
