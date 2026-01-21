@@ -10,12 +10,36 @@ class UbTtsProvider:
     """
 
     def __init__(self, url: str):
+        """
+        Initialize the Ubtech TTS Provider.
+
+        Parameters
+        ----------
+        url : str
+            The URL for the Ubtech TTS service.
+        """
         self.tts_url = url
         self.headers = {"Content-Type": "application/json"}
         logging.info(f"Ubtech TTS Provider initialized for URL: {self.tts_url}")
 
     def speak(self, tts: str, interrupt: bool = True, timestamp: int = 0) -> bool:
-        """Sends a request to the TTS service. Returns True on success."""
+        """
+        Sends a request to the TTS service.
+
+        Parameters
+        ----------
+        tts : str
+            The text to be converted to speech.
+        interrupt : bool
+            Whether to interrupt any currently playing audio. Defaults to True.
+        timestamp : int
+            Timestamp identifier for the TTS request. Defaults to 0.
+
+        Returns
+        -------
+        bool
+            True on success, False otherwise.
+        """
         payload = {"tts": tts, "interrupt": interrupt, "timestamp": timestamp}
         try:
             response = requests.put(
@@ -34,7 +58,16 @@ class UbTtsProvider:
     def get_tts_status(self, timestamp: int) -> str:
         """
         Gets the status of a specific TTS task.
-        Possible statuses: 'build', 'wait', 'run', 'idle'.
+
+        Parameters
+        ----------
+        timestamp : int
+            Timestamp identifier for the TTS task to check.
+
+        Returns
+        -------
+        str
+            Status of the TTS task. Possible values: 'build', 'wait', 'run', 'idle', 'error'.
         """
         try:
             params = {"timestamp": timestamp}

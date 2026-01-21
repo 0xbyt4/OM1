@@ -193,6 +193,8 @@ class FabricDataSubmitter:
         base_url : str
             Base URL for the teleops status API. Default is
             "https://api.openmind.org/api/core/fabric/submit".
+        write_to_local_file : bool
+            If True, writes data to a local file. Default is False.
         """
         self.api_key = api_key
         self.base_url = base_url

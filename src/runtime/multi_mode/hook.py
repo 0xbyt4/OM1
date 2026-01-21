@@ -309,6 +309,14 @@ class ActionHookHandler(LifecycleHookHandler):
     """
 
     def __init__(self, config: Dict[str, Any]):
+        """
+        Initialize the Action Hook Handler.
+
+        Parameters
+        ----------
+        config : Dict[str, Any]
+            Configuration dictionary for the hook handler.
+        """
         super().__init__(config)
         self.action = None
 

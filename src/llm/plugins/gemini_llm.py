@@ -19,13 +19,6 @@ class GeminiLLM(LLM[R]):
     Google Gemini LLM implementation using OpenAI-compatible API.
 
     Handles authentication and response parsing for Gemini endpoints.
-
-    Parameters
-    ----------
-    config : LLMConfig
-        Configuration object containing API settings.
-    available_actions : list[AgentAction], optional
-        List of available actions for function call generation. If provided.
     """
 
     def __init__(

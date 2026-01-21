@@ -21,14 +21,6 @@ class OpenRouter(LLM[R]):
     This class implements the LLM interface for OpenRouter's models (Meta and Anthropic), handling
     configuration, authentication, and async API communication. It supports both
     traditional JSON structured output and function calling.
-
-    Parameters
-    ----------
-    config : LLMConfig
-        Configuration object containing API settings.
-    available_actions : list[AgentAction], optional
-        List of available actions for function call generation. If provided,
-        the LLM will use function calls instead of structured JSON output.
     """
 
     def __init__(

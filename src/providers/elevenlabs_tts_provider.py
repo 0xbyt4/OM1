@@ -13,19 +13,6 @@ class ElevenLabsTTSProvider:
 
     A singleton class that handles text-to-speech conversion and audio output
     through a dedicated thread.
-
-    Parameters
-    ----------
-    url : str
-        The URL endpoint for the TTS service. (Default is https://api.openmind.org/api/core/elevenlabs/tts)
-    api_key : str
-        The API key for the TTS service
-    voice_id : str, optional
-        The name of the voice for Eleven Labs TTS service (default is JBFqnCBsd6RMkjVDRZzb)
-    model_id : str, optional
-        The name of the model for Eleven Labs TTS service (default is eleven_multilingual
-    output_format : str, optional
-        The output format for the audio stream (default is mp3_44100_128)
     """
 
     def __init__(
@@ -105,6 +92,8 @@ class ElevenLabsTTSProvider:
             The URL endpoint for the TTS service.
         api_key : str
             The API key for the TTS service.
+        elevenlabs_api_key : Optional[str]
+            An alternative Eleven Labs specific API key.
         voice_id : str, optional
             The name of the voice for Eleven Labs TTS service.
         model_id : str, optional

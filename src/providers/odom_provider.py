@@ -145,17 +145,6 @@ class OdomProvider:
 
     This class implements a singleton pattern to manage:
         * Odom and pose data using either Zenoh or CycloneDDS
-
-    Parameters
-    ----------
-    URID: str = ""
-        The URID needed to connect to the right Zenoh publisher in the local network
-    use_zenoh: bool = False
-        If true, get odom/pose data from Zenoh - typically used by TurtleBot4
-        Otherwise, use CycloneDDS
-    channel: str = ""
-        The channel to connect to the robot, used for CycloneDDS (e.g., Unitree Go2).
-        If not specified, it will raise an error when starting the provider.
     """
 
     def __init__(
@@ -289,10 +278,7 @@ class OdomProvider:
         """
         Process the odom data and update the internal state.
 
-        Parameters
-        ----------
-        pose : PoseWithCovariance
-            The pose data containing position and orientation.
+        Reads pose data from the internal queue and updates position and orientation.
         """
         while not self._stop_event.is_set():
             try:

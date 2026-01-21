@@ -19,13 +19,6 @@ class XAILLM(LLM[R]):
     XAI LLM implementation using OpenAI-compatible API.
 
     Handles authentication and response parsing for XAI endpoints.
-
-    Parameters
-    ----------
-    config : LLMConfig
-        Configuration object containing API settings.
-    available_actions : list[AgentAction], optional
-        List of available actions for function call generation. If provided.
     """
 
     def __init__(
