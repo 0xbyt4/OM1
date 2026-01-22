@@ -55,6 +55,11 @@ class FacePresence(FuserInput[FacePresenceConfig, Optional[str]]):
     def __init__(self, config: FacePresenceConfig):
         """
         Initialize the face presence input.
+
+        Parameters
+        ----------
+        config : FacePresenceConfig
+            Configuration settings for the sensor input.
         """
         super().__init__(config)
 
