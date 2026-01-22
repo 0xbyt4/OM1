@@ -1,13 +1,9 @@
-"""Tests for gallery_identities_input module."""
-
 import logging
 from queue import Full, Queue
 from unittest.mock import MagicMock, patch
 
 
 class TestGalleryIdentitiesMessageHandler:
-    """Tests for _handle_gallery_message method logging behavior."""
-
     def test_logs_warning_when_retry_put_fails(self, caplog):
         """
         Test that a warning is logged when queue retry put fails.
