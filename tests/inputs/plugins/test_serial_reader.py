@@ -1,5 +1,3 @@
-"""Tests for SerialReader input plugin."""
-
 from unittest.mock import MagicMock, patch
 
 import pytest
