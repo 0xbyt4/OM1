@@ -86,7 +86,12 @@ class ASRProvider:
             The callback function to process ASR results.
         """
         if message_callback is not None:
-            self.ws_client.register_message_callback(message_callback)
+
+            def wrapper(msg: str) -> None:
+                self._monitor.heartbeat("ASRProvider")
+                message_callback(msg)
+
+            self.ws_client.register_message_callback(wrapper)
 
     def start(self):
         """
