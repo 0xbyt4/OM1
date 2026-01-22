@@ -1,5 +1,3 @@
-"""Tests for person_follow_hook module."""
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import aiohttp
