@@ -1,5 +1,3 @@
-"""Tests for GLM-4 LLM plugin."""
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -51,8 +49,6 @@ def mock_avatar_components():
 
 
 class TestGLM4LLMInit:
-    """Tests for GLM4LLM initialization."""
-
     def test_init_without_api_key_raises_error(self):
         """Test that initialization without api_key raises ValueError."""
         config = LLMConfig(api_key=None)
@@ -98,8 +94,6 @@ class TestGLM4LLMInit:
 
 
 class TestGLM4LLMAsk:
-    """Tests for GLM4LLM.ask method."""
-
     @pytest.fixture
     def glm4_llm(self):
         """Create a GLM4LLM instance for testing."""
