@@ -3,6 +3,7 @@
 Provides system health checks, dependency verification, and environment validation.
 """
 
+import logging
 import os
 import shutil
 import socket
@@ -141,8 +142,8 @@ def check_uv_installed() -> CheckResult:
                 message=f"uv {version}",
                 details=f"Path: {uv_path}",
             )
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            pass
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            logging.debug("Failed to get uv version: %s", e)
     return CheckResult(
         name="uv Package Manager",
         status=CheckStatus.FAIL,
@@ -224,8 +225,8 @@ def check_ollama_running() -> CheckResult:
                 message="Running on localhost:11434",
                 details="Local LLM service available for inference",
             )
-    except (socket.error, OSError):
-        pass
+    except (socket.error, OSError) as e:
+        logging.debug("Failed to connect to Ollama: %s", e)
     return CheckResult(
         name="Ollama Service",
         status=CheckStatus.WARN,
@@ -290,8 +291,8 @@ def check_microphone() -> CheckResult:
                 message=f"Found: {default.get('name', 'Unknown')[:30]}",  # type: ignore[union-attr]
                 details=f"Available input devices: {len(input_devices)}",
             )
-    except Exception:
-        pass
+    except Exception as e:
+        logging.debug("Failed to check microphone: %s", e)
     return CheckResult(
         name="Microphone",
         status=CheckStatus.WARN,
@@ -318,8 +319,8 @@ def check_camera() -> CheckResult:
                 details=f"Resolution: {width}x{height}",
             )
         cap.release()
-    except Exception:
-        pass
+    except Exception as e:
+        logging.debug("Failed to check camera: %s", e)
     return CheckResult(
         name="Camera",
         status=CheckStatus.WARN,
@@ -360,7 +361,8 @@ def check_disk_space() -> CheckResult:
                 details=f"Total: {total_gb:.1f} GB, Used: {used_percent:.1f}%",
                 fix_hint="Free up disk space",
             )
-    except Exception:
+    except Exception as e:
+        logging.debug("Failed to check disk space: %s", e)
         return CheckResult(
             name="Disk Space",
             status=CheckStatus.WARN,
@@ -382,8 +384,8 @@ def check_network() -> CheckResult:
                 message="Connected (api.openai.com reachable)",
                 details="External API services are accessible",
             )
-    except (socket.error, OSError):
-        pass
+    except (socket.error, OSError) as e:
+        logging.debug("Failed to check network connectivity: %s", e)
     return CheckResult(
         name="Network",
         status=CheckStatus.WARN,
@@ -427,8 +429,8 @@ def run_all_checks(config_name: Optional[str] = None) -> List[CheckResult]:
     # Hardware checks (optional, may fail)
     try:
         results.append(check_microphone())
-    except Exception:
-        pass
+    except Exception as e:
+        logging.debug("Failed to run microphone check: %s", e)
 
     return results
 
