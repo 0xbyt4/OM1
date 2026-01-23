@@ -8,17 +8,17 @@ from providers.goal_provider import Goal, GoalProvider
 @pytest.fixture
 def goal_provider():
     """Create a GoalProvider instance for testing (local mode)."""
-    GoalProvider.reset()
+    GoalProvider.reset()  # type: ignore[attr-defined]
     provider = GoalProvider(base_url="", timeout=5, refresh_interval=30)
     yield provider
     provider.stop()
-    GoalProvider.reset()
+    GoalProvider.reset()  # type: ignore[attr-defined]
 
 
 @pytest.fixture
 def goal_provider_with_api():
     """Create a GoalProvider instance with API configured."""
-    GoalProvider.reset()
+    GoalProvider.reset()  # type: ignore[attr-defined]
     provider = GoalProvider(
         base_url="http://localhost:5000/goals",
         timeout=5,
@@ -26,7 +26,7 @@ def goal_provider_with_api():
     )
     yield provider
     provider.stop()
-    GoalProvider.reset()
+    GoalProvider.reset()  # type: ignore[attr-defined]
 
 
 class TestGoal:
