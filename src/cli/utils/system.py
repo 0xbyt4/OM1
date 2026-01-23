@@ -281,13 +281,13 @@ def check_microphone() -> CheckResult:
         import sounddevice as sd
 
         devices = sd.query_devices()
-        input_devices = [d for d in devices if d.get("max_input_channels", 0) > 0]
+        input_devices = [d for d in devices if d.get("max_input_channels", 0) > 0]  # type: ignore[union-attr]
         if input_devices:
             default = sd.query_devices(kind="input")
             return CheckResult(
                 name="Microphone",
                 status=CheckStatus.OK,
-                message=f"Found: {default.get('name', 'Unknown')[:30]}",
+                message=f"Found: {default.get('name', 'Unknown')[:30]}",  # type: ignore[union-attr]
                 details=f"Available input devices: {len(input_devices)}",
             )
     except Exception:

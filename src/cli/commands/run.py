@@ -19,7 +19,7 @@ from cli.utils.process import (
 )
 
 
-def setup_config_file(config_name: Optional[str]) -> tuple:
+def setup_config_file(config_name: Optional[str]) -> tuple[str, str]:
     """
     Set up the configuration file.
 
