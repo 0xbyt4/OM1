@@ -24,6 +24,7 @@ class SimulatorState:
     current_action: str = "idle"
     last_speech: str = ""
     current_emotion: str = ""
+    current_head: str = "center"
     system_latency: Optional[dict] = None
 
     def to_dict(self):
@@ -66,6 +67,7 @@ class WebSim(Simulator):
             current_action="idle",
             last_speech="",
             current_emotion="",
+            current_head="center",
             system_latency={
                 "fuse_time": 0,
                 "llm_start": 0,
@@ -232,6 +234,7 @@ class WebSim(Simulator):
                                 current_action: "idle",
                                 last_speech: "",
                                 current_emotion: "",
+                                current_head: "center",
                                 system_latency: {
                                     fuse_time: 0,
                                     llm_start: 0,
@@ -414,6 +417,10 @@ class WebSim(Simulator):
                                                         <div>
                                                             <span className="font-semibold">Emotion:</span>
                                                             <span className="ml-2 text-purple-600">{state.current_emotion}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-semibold">Head:</span>
+                                                            <span className="ml-2 text-green-600">{state.current_head}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -676,11 +683,17 @@ class WebSim(Simulator):
                         if new_emotion != self.state.current_emotion:
                             self.state.current_emotion = new_emotion
                             updated = True
+                    elif action.type == "head":
+                        new_head = action.value
+                        if new_head != self.state.current_head:
+                            self.state.current_head = new_head
+                            updated = True
 
                 self.state_dict = {
                     "current_action": self.state.current_action,
                     "last_speech": self.state.last_speech,
                     "current_emotion": self.state.current_emotion,
+                    "current_head": self.state.current_head,
                     "system_latency": system_latency,
                     "inputs": input_rezeroed,
                 }

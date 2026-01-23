@@ -1,0 +1,83 @@
+{
+  // Head Control Action Example Configuration
+  // This config demonstrates the head_control action for controlling robot head/gaze direction
+  //
+  // Prerequisites:
+  //   1. Install Ollama: https://ollama.ai
+  //   2. Start Ollama: ollama serve
+  //   3. Pull a model: ollama pull llama3.2
+  //
+  // Run with: uv run src/run.py head_control_example
+  //
+  // Available head actions:
+  //   - look left     : Turn head to the left
+  //   - look right    : Turn head to the right
+  //   - look up       : Tilt head upward
+  //   - look down     : Tilt head downward
+  //   - look at person: Direct gaze toward detected person
+  //   - center        : Return head to neutral position
+  //
+  // Connectors:
+  //   - ros2   : Generic ROS2 integration
+  //   - avatar : AvatarProvider for simulation/visualization
+
+  version: "v1.0.1",
+  hertz: 0.5,
+  name: "head_control_demo",
+  api_key: "openmind_free",
+  system_prompt_base: "You are a friendly robot assistant. You can look around to show attention and engagement. When someone speaks to you, look at them. When curious about something, look in that direction. Use head movements to show you are listening and engaged.",
+  system_governance: "Here are the laws that govern your actions. Do not violate these laws.\nFirst Law: A robot cannot harm a human or allow a human to come to harm.\nSecond Law: A robot must obey orders from humans, unless those orders conflict with the First Law.\nThird Law: A robot must protect itself, as long as that protection doesn't conflict with the First or Second Law.",
+  system_prompt_examples: "Here are some examples of interactions:\n\n1. When someone greets you from the left:\n    Head: 'look left'\n    Speak: 'Hello! I see you there.'\n\n2. When someone asks you to pay attention:\n    Head: 'look at person'\n    Speak: 'I am listening.'\n\n3. When thinking about something:\n    Head: 'look up'\n    Speak: 'Let me think about that...'\n\n4. When returning to neutral:\n    Head: 'center'\n    Speak: 'Ready for your next question.'",
+  agent_inputs: [
+    {
+      type: "GoogleASRInput",
+      config: {
+        enable_tts_interrupt: false,
+      },
+    },
+  ],
+  simulators: [
+    {
+      type: "WebSim",
+      config: {
+        host: "0.0.0.0",
+        port: 8000,
+        tick_rate: 100,
+        auto_reconnect: true,
+        debug_mode: false,
+      },
+    },
+  ],
+  cortex_llm: {
+    type: "OllamaLLM",
+    config: {
+      agent_name: "Atlas",
+      model: "llama3.2",
+      base_url: "http://localhost:11434",
+      temperature: 0.7,
+      num_ctx: 4096,
+      timeout: 120,
+      history_length: 5,
+    },
+  },
+  agent_actions: [
+    {
+      name: "head_control",
+      llm_label: "head",
+      connector: "avatar",
+    },
+    {
+      name: "speak",
+      llm_label: "speak",
+      connector: "elevenlabs_tts",
+      config: {
+        enable_tts_interrupt: false,
+      },
+    },
+    {
+      name: "face",
+      llm_label: "emotion",
+      connector: "avatar",
+    },
+  ],
+}
