@@ -24,6 +24,8 @@ class SimulatorState:
     current_action: str = "idle"
     last_speech: str = ""
     current_emotion: str = ""
+    current_goal: str = ""
+    goal_priority: str = ""
     system_latency: Optional[dict] = None
 
     def to_dict(self):
@@ -66,6 +68,8 @@ class WebSim(Simulator):
             current_action="idle",
             last_speech="",
             current_emotion="",
+            current_goal="",
+            goal_priority="",
             system_latency={
                 "fuse_time": 0,
                 "llm_start": 0,
@@ -232,6 +236,8 @@ class WebSim(Simulator):
                                 current_action: "idle",
                                 last_speech: "",
                                 current_emotion: "",
+                                current_goal: "",
+                                goal_priority: "",
                                 system_latency: {
                                     fuse_time: 0,
                                     llm_start: 0,
@@ -414,6 +420,20 @@ class WebSim(Simulator):
                                                         <div>
                                                             <span className="font-semibold">Emotion:</span>
                                                             <span className="ml-2 text-purple-600">{state.current_emotion}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-semibold">Goal:</span>
+                                                            <span className="ml-2 text-orange-600">{state.current_goal || "No goal set"}</span>
+                                                            {state.goal_priority && (
+                                                                <span className={`ml-2 px-2 py-1 text-xs rounded ${
+                                                                    state.goal_priority === 'critical' ? 'bg-red-100 text-red-800' :
+                                                                    state.goal_priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                                                                    state.goal_priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                                    'bg-green-100 text-green-800'
+                                                                }`}>
+                                                                    {state.goal_priority.toUpperCase()}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -676,11 +696,27 @@ class WebSim(Simulator):
                         if new_emotion != self.state.current_emotion:
                             self.state.current_emotion = new_emotion
                             updated = True
+                    elif action.type == "goal":
+                        goal_value = action.value
+                        if isinstance(goal_value, dict):
+                            new_goal = goal_value.get(
+                                "name", goal_value.get("action", "")
+                            )
+                            new_priority = goal_value.get("priority", "medium")
+                        else:
+                            new_goal = str(goal_value)
+                            new_priority = "medium"
+                        if new_goal != self.state.current_goal:
+                            self.state.current_goal = new_goal
+                            self.state.goal_priority = new_priority
+                            updated = True
 
                 self.state_dict = {
                     "current_action": self.state.current_action,
                     "last_speech": self.state.last_speech,
                     "current_emotion": self.state.current_emotion,
+                    "current_goal": self.state.current_goal,
+                    "goal_priority": self.state.goal_priority,
                     "system_latency": system_latency,
                     "inputs": input_rezeroed,
                 }
