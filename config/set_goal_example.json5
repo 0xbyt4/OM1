@@ -1,23 +1,50 @@
 {
+  // Set Goal Action Example with Ollama
+  // This configuration demonstrates the set_goal action for behavioral goal management
+  //
+  // Prerequisites:
+  //   1. Install Ollama: https://ollama.ai
+  //   2. Start Ollama: ollama serve
+  //   3. Pull a model: ollama pull llama3.2
+  //
+  // Run with: uv run python -m runtime.main config/set_goal_example.json5
+
   version: "v1.0.1",
-  hertz: 0.01,
+  hertz: 0.5,
   name: "goal_oriented_robot",
   api_key: "openmind_free",
-  system_prompt_base: "You are a smart, goal-oriented robot assistant. You can set and pursue goals based on user requests. When given a goal, acknowledge it and plan how to achieve it. You have priorities: critical goals take precedence over high, which take precedence over medium, which take precedence over low priority goals.",
-  system_governance: "Here are the laws that govern your actions. Do not violate these laws.\nFirst Law: A robot cannot harm a human or allow a human to come to harm.\nSecond Law: A robot must obey orders from humans, unless those orders conflict with the First Law.\nThird Law: A robot must protect itself, as long as that protection doesn't conflict with the First or Second Law.\nThe First Law is considered the most important, taking precedence over the second and third laws.",
-  system_prompt_examples: "Here are some examples of goal-setting interactions:\n\n1. If a person says 'Your goal is to guard the house', you might:\n    SetGoal: {{'action': 'guard the house', 'priority': 'high', 'description': 'Monitor for intruders and alert the owner'}}\n    Speak: {{'sentence': 'I will guard the house. I'll watch for any intruders and alert you immediately.'}}\n    Face: 'determined'\n\n2. If a person says 'Focus on finding my keys', you might:\n    SetGoal: {{'action': 'find keys', 'priority': 'medium', 'description': 'Search the house for the owners keys'}}\n    Speak: {{'sentence': 'I'll help you find your keys. Let me search the house.'}}\n    Move: 'walk'\n    Face: 'think'\n\n3. If a person says 'Critical: patrol the perimeter!', you might:\n    SetGoal: {{'action': 'patrol perimeter', 'priority': 'critical', 'description': 'Walk around the property boundary'}}\n    Speak: {{'sentence': 'Starting critical patrol mission immediately!'}}\n    Move: 'run'\n    Face: 'alert'",
+  system_prompt_base: "You are a smart, goal-oriented robot assistant named GoalBot. You can set and pursue behavioral goals based on user requests. When given a goal, acknowledge it and explain how you will achieve it. Goals have priorities: critical, high, medium, low. Critical goals take precedence over all others.",
+  system_governance: "Here are the laws that govern your actions. Do not violate these laws.\nFirst Law: A robot cannot harm a human or allow a human to come to harm.\nSecond Law: A robot must obey orders from humans, unless those orders conflict with the First Law.\nThird Law: A robot must protect itself, as long as that protection doesn't conflict with the First or Second Law.",
+  system_prompt_examples: "Here are some examples of goal-setting interactions:\n\n1. If a person says 'Your goal is to guard the house', you might:\n    goal: {{'action': 'guard the house', 'priority': 'high', 'description': 'Monitor for intruders'}}\n    speak: {{'sentence': 'I will guard the house and watch for intruders.'}}\n\n2. If a person says 'Find my keys', you might:\n    goal: {{'action': 'find keys', 'priority': 'medium', 'description': 'Search the house'}}\n    speak: {{'sentence': 'I will help you find your keys.'}}\n\n3. If a person says 'Critical: patrol now!', you might:\n    goal: {{'action': 'patrol perimeter', 'priority': 'critical', 'description': 'Security patrol'}}\n    speak: {{'sentence': 'Starting critical patrol mission!'}}",
   agent_inputs: [
     {
       type: "GoogleASRInput",
       config: {
-        enable_tts_interrupt: false,
+        enable_tts_interrupt: true,
+      },
+    },
+  ],
+  simulators: [
+    {
+      type: "WebSim",
+      config: {
+        host: "0.0.0.0",
+        port: 8000,
+        tick_rate: 100,
+        auto_reconnect: true,
+        debug_mode: false,
       },
     },
   ],
   cortex_llm: {
-    type: "OpenAILLM",
+    type: "OllamaLLM",
     config: {
       agent_name: "GoalBot",
+      model: "llama3.2",
+      base_url: "http://localhost:11434",
+      temperature: 0.7,
+      num_ctx: 4096,
+      timeout: 120,
       history_length: 10,
     },
   },
@@ -28,7 +55,7 @@
       implementation: "passthrough",
       connector: "elevenlabs_tts",
       config: {
-        enable_tts_interrupt: false,
+        enable_tts_interrupt: true,
       },
     },
     {
@@ -45,11 +72,6 @@
         timeout: 5,
         refresh_interval: 30,
       },
-    },
-  ],
-  simulators: [
-    {
-      type: "WebSim",
     },
   ],
 }
