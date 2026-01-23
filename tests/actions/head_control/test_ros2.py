@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -42,7 +42,8 @@ async def test_head_actions(ros2_connector, action, expected_msg):
 async def test_unknown_action_logs_info(ros2_connector):
     """Test that unknown actions are logged."""
     with patch("actions.head_control.connector.ros2.logging") as mock_logging:
-        input_interface = HeadInput(action="unknown_action")
+        input_interface = Mock()
+        input_interface.action = "unknown_action"
 
         await ros2_connector.connect(input_interface)
 

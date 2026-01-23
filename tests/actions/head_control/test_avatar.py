@@ -52,7 +52,8 @@ async def test_head_actions_send_avatar_command(
 async def test_unknown_action_logs_warning(avatar_connector, mock_avatar_provider):
     """Test that unknown actions are logged as warnings."""
     with patch("actions.head_control.connector.avatar.logging") as mock_logging:
-        input_interface = HeadInput(action="unknown_action")
+        input_interface = Mock()
+        input_interface.action = "unknown_action"
 
         await avatar_connector.connect(input_interface)
 
