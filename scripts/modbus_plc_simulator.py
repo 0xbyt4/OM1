@@ -39,7 +39,7 @@ from pymodbus.datastore import (
     ModbusSequentialDataBlock,
     ModbusServerContext,
 )
-from pymodbus.server import StartAsyncTcpServer
+from pymodbus.server import ServerAsyncStop, StartAsyncTcpServer
 
 from simulators.plugins.modbus_plc_model import (
     COIL_ALARM,
@@ -274,6 +274,7 @@ async def run_simulator(
     def signal_handler() -> None:
         logger.info("Shutdown signal received")
         shutdown_event.set()
+        asyncio.ensure_future(ServerAsyncStop())
 
     loop = asyncio.get_event_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
