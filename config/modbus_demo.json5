@@ -1,0 +1,79 @@
+{
+  version: "v1.0.1",
+  hertz: 0.5,
+  name: "modbus_demo",
+  api_key: "openmind_free",
+  system_prompt_base: "You are an industrial PLC controller agent. You monitor a simulated manufacturing process via Modbus sensors and can control the motor and fan. Your goal is to maintain safe operating conditions: keep temperature below 80C by adjusting fan speed, and turn the motor on/off as needed. You receive periodic sensor readings with Temperature (C), Pressure (bar), Fan Speed (RPM), and Motor RPM. You can write to the PLC using the modbus_write action.",
+  system_governance: "Safety rules:\n1. If temperature exceeds 70C, increase fan speed immediately.\n2. If temperature exceeds 80C (ALARM), turn off the motor and set fan to maximum (3000 RPM).\n3. If temperature drops below 30C and no alarm, you may reduce fan speed.\n4. Never set fan speed above 3000 RPM.\n5. Monitor pressure for anomalies (normal range: 2.8-3.5 bar).",
+  system_prompt_examples: "Sensor reading example:\nTemperature: 25 C, Pressure: 3.21 bar, Fan Speed: 0 rpm, Motor RPM: 0\n\nAction examples:\n1. Turn motor ON:\n   write_plc: {{'action': 'coil:0:true'}}\n\n2. Set fan speed to 1500 RPM:\n   write_plc: {{'action': 'register:2:1500'}}\n\n3. Turn motor OFF and max fan (emergency):\n   write_plc: {{'action': 'coil:0:false'}}\n   write_plc: {{'action': 'register:2:3000'}}\n\n4. When readings are normal and motor is off, start motor:\n   write_plc: {{'action': 'coil:0:true'}}\n   write_plc: {{'action': 'register:2:500'}}",
+  agent_inputs: [
+    {
+      type: "ModbusSensor",
+      config: {
+        host: "127.0.0.1",
+        port: 5020,
+        device_id: 1,
+        poll_interval: 1.0,
+        descriptor: "PLC Process Sensor (Modbus TCP)",
+        registers: [
+          {
+            address: 0,
+            name: "Temperature",
+            register_type: "holding",
+            scale: 0.1,
+            unit: "C",
+            data_type: "uint16",
+          },
+          {
+            address: 1,
+            name: "Pressure",
+            register_type: "holding",
+            scale: 0.01,
+            unit: "bar",
+            data_type: "uint16",
+          },
+          {
+            address: 2,
+            name: "Fan Speed",
+            register_type: "holding",
+            scale: 1.0,
+            unit: "rpm",
+            data_type: "uint16",
+          },
+          {
+            address: 3,
+            name: "Motor RPM",
+            register_type: "holding",
+            scale: 1.0,
+            unit: "rpm",
+            data_type: "uint16",
+          },
+        ],
+      },
+    },
+  ],
+  cortex_llm: {
+    type: "OllamaLLM",
+    config: {
+      agent_name: "PLCController",
+      model: "llama3.2",
+      base_url: "http://localhost:11434",
+      temperature: 0.3,
+      num_ctx: 4096,
+      timeout: 120,
+      history_length: 10,
+    },
+  },
+  agent_actions: [
+    {
+      name: "modbus_write",
+      llm_label: "write_plc",
+      connector: "modbus",
+      config: {
+        host: "127.0.0.1",
+        port: 5020,
+        device_id: 1,
+      },
+    },
+  ],
+}
