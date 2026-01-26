@@ -30,6 +30,7 @@ dependencies = [
     "torch==2.6.0",
     "torchvision==0.21.0",
     "pyserial==3.5",
+    "pymodbus==3.11.4",
     "py-mjpeg==1.0.1",
     "fastapi==0.115.8",
     "uvicorn==0.34.0",
