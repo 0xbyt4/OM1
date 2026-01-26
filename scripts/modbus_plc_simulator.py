@@ -30,6 +30,7 @@ import logging
 import signal
 import sys
 from pathlib import Path
+from typing import cast
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -134,7 +135,7 @@ def read_agent_inputs(
     model : PLCPhysicsModel
         The physics model to update.
     """
-    device = context[0]  # single=True, device 0
+    device = cast(ModbusDeviceContext, context[0])  # single=True, device 0
 
     # Read fan speed from holding register
     # DeviceContext.getValues uses wire addresses (no block offset needed)
@@ -170,7 +171,7 @@ def write_physics_outputs(
     model : PLCPhysicsModel
         The physics model with updated values.
     """
-    device = context[0]
+    device = cast(ModbusDeviceContext, context[0])
     regs = model.get_holding_registers()
     coils = model.get_coils()
 
