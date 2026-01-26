@@ -11,6 +11,7 @@ Run with: uv run pytest -m "integration" tests/integration/test_modbus_feedback_
 """
 
 import asyncio
+from typing import cast
 
 import pytest
 import pytest_asyncio
@@ -102,7 +103,7 @@ def read_agent_inputs(context: ModbusServerContext, model: PLCPhysicsModel) -> N
     model : PLCPhysicsModel
         The physics model to update.
     """
-    device = context[0]
+    device = cast(ModbusDeviceContext, context[0])
 
     fan_values = device.getValues(3, REG_FAN_SPEED, count=1)
     if isinstance(fan_values, list) and len(fan_values) > 0:
@@ -127,7 +128,7 @@ def write_physics_outputs(context: ModbusServerContext, model: PLCPhysicsModel) 
     model : PLCPhysicsModel
         The physics model with updated values.
     """
-    device = context[0]
+    device = cast(ModbusDeviceContext, context[0])
     regs = model.get_holding_registers()
     coils = model.get_coils()
 

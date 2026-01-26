@@ -305,7 +305,7 @@ class ModbusSensor(FuserInput[ModbusSensorConfig, Optional[Dict[str, str]]]):
 
         return Message(timestamp=time.time(), message=message_text)
 
-    async def raw_to_text(self, raw_input: Optional[Dict[str, str]]) -> None:
+    async def raw_to_text(self, raw_input: Optional[Dict[str, str]]):
         """
         Process raw input and update the message buffer.
 
