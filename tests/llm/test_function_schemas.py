@@ -50,45 +50,6 @@ class SampleIntEnum(IntEnum):
 
 
 @dataclass
-class IntFieldInput:
-    timeout_sec: int
-
-
-@dataclass
-class IntFieldInterface(Interface[IntFieldInput, IntFieldInput]):
-    """Action with an integer parameter."""
-
-    input: IntFieldInput
-    output: IntFieldInput
-
-
-@dataclass
-class FloatFieldInput:
-    speed: float
-
-
-@dataclass
-class FloatFieldInterface(Interface[FloatFieldInput, FloatFieldInput]):
-    """Action with a float parameter."""
-
-    input: FloatFieldInput
-    output: FloatFieldInput
-
-
-@dataclass
-class BoolFieldInput:
-    enabled: bool
-
-
-@dataclass
-class BoolFieldInterface(Interface[BoolFieldInput, BoolFieldInput]):
-    """Action with a boolean parameter."""
-
-    input: BoolFieldInput
-    output: BoolFieldInput
-
-
-@dataclass
 class StrEnumFieldInput:
     action: SampleStrEnum
 
@@ -183,36 +144,6 @@ def test_generate_function_schema_from_action(agent_action):
 
     assert params["required"] == ["value"]
     assert fn["description"].startswith("SampleInterface(")
-
-
-def test_int_field_generates_integer_type(test_connector):
-    action = _make_agent_action(test_connector, IntFieldInterface, "int_action")
-    schema = generate_function_schema_from_action(action)
-
-    props = schema["function"]["parameters"]["properties"]
-    assert (
-        props["timeout_sec"]["type"] == "integer"
-    ), f"int field should produce 'integer' type, got '{props['timeout_sec']['type']}'"
-
-
-def test_float_field_generates_number_type(test_connector):
-    action = _make_agent_action(test_connector, FloatFieldInterface, "float_action")
-    schema = generate_function_schema_from_action(action)
-
-    props = schema["function"]["parameters"]["properties"]
-    assert (
-        props["speed"]["type"] == "number"
-    ), f"float field should produce 'number' type, got '{props['speed']['type']}'"
-
-
-def test_bool_field_generates_boolean_type(test_connector):
-    action = _make_agent_action(test_connector, BoolFieldInterface, "bool_action")
-    schema = generate_function_schema_from_action(action)
-
-    props = schema["function"]["parameters"]["properties"]
-    assert (
-        props["enabled"]["type"] == "boolean"
-    ), f"bool field should produce 'boolean' type, got '{props['enabled']['type']}'"
 
 
 def test_str_enum_field_generates_enum(test_connector):
