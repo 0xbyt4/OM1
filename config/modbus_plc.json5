@@ -1,0 +1,106 @@
+{
+  // Modbus PLC Controller - Real Hardware Configuration
+  //
+  // Prerequisites:
+  //   1. Real PLC accessible via Modbus TCP (default port 502)
+  //   2. Ollama running: ollama serve && ollama pull llama3.2
+  //
+  // Usage:
+  //   uv run src/run.py modbus_plc
+  //
+  // Adjust host, port, device_id, and register addresses to match your PLC.
+  // WebSim dashboard available at http://localhost:8000
+
+  version: "v1.0.1",
+  hertz: 0.5,
+  name: "modbus_plc",
+  api_key: "openmind_free",
+  system_prompt_base: "You are an industrial PLC controller agent. You monitor a manufacturing process via Modbus sensors and can control actuators. Your goal is to maintain safe operating conditions. You receive periodic sensor readings and can write to PLC registers and coils using the modbus_write action. Always prioritize safety over performance.",
+  system_governance: "Safety rules:\n1. If temperature exceeds 70C, increase cooling immediately.\n2. If temperature exceeds 80C (ALARM), shut down the process and activate emergency cooling.\n3. Monitor pressure for anomalies and report deviations.\n4. Never exceed actuator limits.\n5. Log all control actions with reasoning.",
+  system_prompt_examples: "Sensor reading example:\nTemperature: 25 C, Pressure: 3.21 bar, Fan Speed: 0 rpm, Motor RPM: 0\n\nAction examples:\n1. Turn motor ON:\n   write_plc: {{'action': 'coil:0:true'}}\n\n2. Set fan speed to 1500 RPM:\n   write_plc: {{'action': 'register:2:1500'}}\n\n3. Emergency stop:\n   write_plc: {{'action': 'coil:0:false'}}\n   write_plc: {{'action': 'register:2:3000'}}",
+  agent_inputs: [
+    {
+      type: "ModbusSensor",
+      config: {
+        // Change this to your PLC's IP address
+        host: "192.168.1.10",
+        port: 502,
+        device_id: 1,
+        poll_interval: 2.0,
+        descriptor: "PLC Process Sensor (Modbus TCP)",
+        registers: [
+          // Adjust addresses, scales, and units to match your PLC register map
+          {
+            address: 0,
+            name: "Temperature",
+            register_type: "holding",
+            scale: 0.1,
+            unit: "C",
+            data_type: "uint16",
+          },
+          {
+            address: 1,
+            name: "Pressure",
+            register_type: "holding",
+            scale: 0.01,
+            unit: "bar",
+            data_type: "uint16",
+          },
+          {
+            address: 2,
+            name: "Fan Speed",
+            register_type: "holding",
+            scale: 1.0,
+            unit: "rpm",
+            data_type: "uint16",
+          },
+          {
+            address: 3,
+            name: "Motor RPM",
+            register_type: "holding",
+            scale: 1.0,
+            unit: "rpm",
+            data_type: "uint16",
+          },
+        ],
+      },
+    },
+  ],
+  simulators: [
+    {
+      type: "WebSim",
+      config: {
+        host: "0.0.0.0",
+        port: 8000,
+        tick_rate: 100,
+        auto_reconnect: true,
+        debug_mode: false,
+      },
+    },
+  ],
+  cortex_llm: {
+    type: "OllamaLLM",
+    config: {
+      agent_name: "PLCController",
+      model: "llama3.2",
+      base_url: "http://localhost:11434",
+      temperature: 0.3,
+      num_ctx: 4096,
+      timeout: 120,
+      history_length: 10,
+    },
+  },
+  agent_actions: [
+    {
+      name: "modbus_write",
+      llm_label: "write_plc",
+      connector: "modbus",
+      config: {
+        // Must match the PLC address above
+        host: "192.168.1.10",
+        port: 502,
+        device_id: 1,
+      },
+    },
+  ],
+}
