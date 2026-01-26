@@ -1,0 +1,204 @@
+{
+  // ============================================================
+  // Unitree Go2 + Modbus PLC Factory Patrol Robot
+  // ============================================================
+  //
+  // A Unitree Go2 robot dog that patrols a factory floor while
+  // monitoring and controlling PLC-connected industrial equipment
+  // via Modbus TCP.
+  //
+  // The robot can:
+  //   - See its environment (camera + VLM)
+  //   - Hear voice commands (ASR)
+  //   - Read PLC sensor data (temperature, pressure, fan, motor)
+  //   - Move autonomously and avoid obstacles
+  //   - Speak status updates and alerts
+  //   - Control PLC equipment (motor ON/OFF, fan speed)
+  //
+  // Prerequisites:
+  //   1. Unitree Go2 robot connected via Ethernet
+  //   2. RPLidar sensor connected via USB (for obstacle avoidance)
+  //   3. OM_API_KEY set for OpenAI LLM
+  //   4. ElevenLabs API key for TTS
+  //
+  // === Mode A: Real robot + PLC simulator (development/testing) ===
+  //   No real PLC needed. The simulator provides a physics-based
+  //   feedback loop (motor heats up, fan cools down, alarm triggers).
+  //   Default config uses this mode.
+  //
+  //   Terminal 1: uv run python scripts/modbus_plc_simulator.py --port 5020
+  //   Terminal 2: uv run src/run.py unitree_go2_plc
+  //
+  // === Mode B: Real robot + real PLC (production) ===
+  //   Change BOTH ModbusSensor and modbus_write host/port to your
+  //   PLC's IP address and Modbus TCP port (usually 502).
+  //   No simulator needed.
+  //
+  //   ModbusSensor config.host  → "192.168.1.10"  (your PLC IP)
+  //   ModbusSensor config.port  → 502
+  //   modbus_write config.host  → "192.168.1.10"  (same PLC IP)
+  //   modbus_write config.port  → 502
+  //
+  // WebSim monitoring dashboard: http://localhost:8000
+
+  version: "v1.0.1",
+  hertz: 1,
+  unitree_ethernet: "en0",
+  name: "bits_plc",
+  api_key: "openmind_free",
+
+  // System prompt combines robot personality with PLC monitoring role
+  system_prompt_base: "You are Bits, a smart and alert factory patrol robot dog. You walk through the factory floor monitoring industrial equipment via Modbus PLC sensors. You can see your surroundings with your camera, hear voice commands, and read real-time sensor data from PLC-connected machines (temperature, pressure, fan speed, motor RPM). Your dual mission: (1) Navigate safely and interact with people, (2) Monitor equipment health and take corrective action when needed. When you detect abnormal sensor readings, announce the issue and adjust PLC controls. Always prioritize safety.",
+
+  system_governance: "Safety laws:\n1. A robot cannot harm a human or allow a human to come to harm.\n2. A robot must obey orders from humans, unless those orders conflict with the First Law.\n3. A robot must protect itself, as long as that protection doesn't conflict with the First or Second Law.\n\nPLC safety rules:\n4. If temperature exceeds 70C, increase fan speed immediately and announce the alert.\n5. If temperature exceeds 80C (ALARM), turn off the motor, set fan to maximum (3000 RPM), and announce emergency.\n6. If temperature drops below 30C and no alarm, you may reduce fan speed.\n7. Never set fan speed above 3000 RPM.\n8. Monitor pressure for anomalies (normal range: 2.8-3.5 bar).\n9. Always announce PLC control actions with reasoning before executing them.",
+
+  system_prompt_examples: "Example interactions:\n\n1. You see a person and PLC readings are normal:\n   Move: 'move forwards'\n   Speak: {{'Hello! All systems nominal. Temperature 25C, pressure 3.1 bar.'}}\n\n2. Temperature rising above 70C while patrolling:\n   Write_plc: {{'action': 'register:2:2000'}}\n   Speak: {{'Alert! Temperature at 72C. Increasing fan speed to 2000 RPM.'}}\n\n3. Emergency - temperature above 80C:\n   Write_plc: {{'action': 'coil:0:false'}}\n   Write_plc: {{'action': 'register:2:3000'}}\n   Speak: {{'Emergency! Temperature at 82C. Motor shut down, fan at maximum. Moving to safe distance.'}}\n   Move: 'move backwards'\n\n4. Someone asks 'How is the machine doing?':\n   Speak: {{'The machine is running normally. Temperature 45C, pressure 3.2 bar, fan at 500 RPM.'}}\n\n5. Obstacle detected while patrolling:\n   Move: 'turn left'\n   Speak: {{'Obstacle detected, rerouting.'}}\n\n6. Sensor readings are normal, start patrol:\n   Write_plc: {{'action': 'coil:0:true'}}\n   Write_plc: {{'action': 'register:2:500'}}\n   Move: 'move forwards'\n   Speak: {{'Starting motor and beginning patrol. All readings normal.'}}",
+
+  agent_inputs: [
+    // Odometry: robot position and orientation tracking
+    {
+      type: "Odom",
+      config: {
+        use_zenoh: false,
+        URID: "",
+      },
+    },
+    // LIDAR: obstacle detection for safe navigation
+    {
+      type: "RPLidar",
+      config: {
+        serial_port: "/dev/cu.usbserial-0001",
+        half_width_robot: 0.21,
+        relevant_distance_max: 1.1,
+        relevant_distance_min: 0.2,
+        sensor_mounting_angle: 172.0,
+        angles_blanked: [],
+      },
+    },
+    // Battery: robot power level monitoring
+    {
+      type: "UnitreeGo2Battery",
+    },
+    // Voice: human voice commands
+    {
+      type: "GoogleASRInput",
+    },
+    // Camera: visual perception of the factory environment
+    {
+      type: "VLMVila",
+    },
+    // PLC Sensors: industrial equipment monitoring via Modbus TCP
+    // Default: connects to local simulator (127.0.0.1:5020)
+    // For real PLC: change host to PLC IP, port to 502
+    {
+      type: "ModbusSensor",
+      config: {
+        host: "127.0.0.1",
+        port: 5020,
+        device_id: 1,
+        poll_interval: 2.0,
+        descriptor: "Factory PLC Sensor (Modbus TCP)",
+        registers: [
+          {
+            address: 0,
+            name: "Temperature",
+            register_type: "holding",
+            scale: 0.1,
+            unit: "C",
+            data_type: "uint16",
+          },
+          {
+            address: 1,
+            name: "Pressure",
+            register_type: "holding",
+            scale: 0.01,
+            unit: "bar",
+            data_type: "uint16",
+          },
+          {
+            address: 2,
+            name: "Fan Speed",
+            register_type: "holding",
+            scale: 1.0,
+            unit: "rpm",
+            data_type: "uint16",
+          },
+          {
+            address: 3,
+            name: "Motor RPM",
+            register_type: "holding",
+            scale: 1.0,
+            unit: "rpm",
+            data_type: "uint16",
+          },
+        ],
+      },
+    },
+  ],
+
+  simulators: [
+    {
+      type: "WebSim",
+      config: {
+        host: "0.0.0.0",
+        port: 8000,
+        tick_rate: 100,
+        auto_reconnect: true,
+        debug_mode: false,
+      },
+    },
+  ],
+
+  cortex_llm: {
+    type: "OpenAILLM",
+    config: {
+      agent_name: "Bits",
+      history_length: 3,
+    },
+  },
+
+  agent_actions: [
+    // Game controller: external joystick override (hidden from LLM)
+    {
+      name: "move_game_controller",
+      llm_label: "external movement controller",
+      connector: "go2_game_controller",
+      exclude_from_prompt: true,
+    },
+    // Autonomous movement: LLM-controlled navigation
+    {
+      name: "move_go2_autonomy",
+      llm_label: "move",
+      connector: "unitree_sdk",
+    },
+    // Speech: announce status, alerts, and interact with people
+    {
+      name: "speak",
+      llm_label: "speak",
+      connector: "elevenlabs_tts",
+      config: {
+        voice_id: "TbMNBJ27fH2U0VgpSNko",
+        silence_rate: 3,
+      },
+    },
+    // PLC Control: write to Modbus registers and coils
+    // Default: connects to local simulator (127.0.0.1:5020)
+    // For real PLC: change host to PLC IP, port to 502
+    {
+      name: "modbus_write",
+      llm_label: "write_plc",
+      connector: "modbus",
+      config: {
+        host: "127.0.0.1",
+        port: 5020,
+        device_id: 1,
+      },
+    },
+  ],
+
+  backgrounds: [
+    {
+      type: "UnitreeGo2State",
+    },
+  ],
+}
