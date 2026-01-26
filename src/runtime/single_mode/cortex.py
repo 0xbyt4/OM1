@@ -189,7 +189,7 @@ class CortexRuntime:
                     logging.debug("Tasks cancelled during config reload, continuing...")
                     await asyncio.sleep(0.1)
 
-                    if not self.cortex_loop_task.done():
+                    if self.cortex_loop_task and not self.cortex_loop_task.done():
                         continue
                     else:
                         break
