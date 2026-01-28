@@ -1,9 +1,21 @@
 import json
 import os
+import shutil
+import tempfile
+from typing import Generator
 
+import pytest
 from typer.testing import CliRunner
 
 from cli import app
+
+
+@pytest.fixture
+def temp_dir() -> Generator[str, None, None]:
+    dir_path = tempfile.mkdtemp()
+    yield dir_path
+    shutil.rmtree(dir_path)
+
 
 runner = CliRunner()
 

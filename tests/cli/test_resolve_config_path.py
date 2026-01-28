@@ -1,8 +1,18 @@
 import os
+import shutil
+import tempfile
+from typing import Generator
 
 import pytest
 
 from cli import _resolve_config_path
+
+
+@pytest.fixture
+def temp_dir() -> Generator[str, None, None]:
+    dir_path = tempfile.mkdtemp()
+    yield dir_path
+    shutil.rmtree(dir_path)
 
 
 class TestResolveConfigPath:
