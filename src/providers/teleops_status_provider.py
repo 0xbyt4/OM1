@@ -2,6 +2,7 @@ import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -54,7 +55,7 @@ class BatteryStatus:
             charging_status=data.get("charging_status", False),
             temperature=data.get("temperature", 0.0),
             voltage=data.get("voltage", 0.0),
-            timestamp=data.get("timestamp", str(time.time())),
+            timestamp=data.get("timestamp", datetime.now().isoformat()),
         )
 
 

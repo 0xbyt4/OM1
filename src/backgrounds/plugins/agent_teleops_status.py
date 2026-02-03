@@ -1,5 +1,5 @@
 import logging
-import time
+from datetime import datetime
 from typing import Optional
 
 from pydantic import Field
@@ -84,7 +84,7 @@ class AgentTeleopsStatusBackground(Background[AgentTeleopsStatusConfig]):
         """
         Run the teleops status background process.
         """
-        current_time = str(time.time())
+        current_time = datetime.now().isoformat()
         self.teleops_status_provider.share_status(
             TeleopsStatus.from_dict(
                 {

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import Field
@@ -172,12 +173,12 @@ class UnitreeG1Basic(FuserInput[UnitreeG1BasicConfig, List[float]]):
         self.status_provider.share_status(
             TeleopsStatus(
                 machine_name="UnitreeG1",
-                update_time=str(time.time()),
+                update_time=datetime.now().isoformat(),
                 battery_status=BatteryStatus(
                     battery_level=self.battery_percentage,
                     temperature=self.battery_temperature,
                     voltage=self.battery_voltage,
-                    timestamp=str(time.time()),
+                    timestamp=datetime.now().isoformat(),
                     charging_status=False,
                 ),
             )

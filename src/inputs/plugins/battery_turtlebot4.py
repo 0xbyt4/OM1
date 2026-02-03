@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from datetime import datetime
 from typing import List, Optional
 
 import zenoh
@@ -142,12 +143,14 @@ class TurtleBot4Battery(FuserInput[TurtleBot4BatteryConfig, List[str]]):
         self.status_provider.share_status(
             TeleopsStatus(
                 machine_name="TurtleBot4",
-                update_time=str(time.time()),
+                update_time=datetime.now().isoformat(),
                 battery_status=BatteryStatus(
                     battery_level=self.battery_percentage,
                     temperature=self.battery_temperature,
                     voltage=self.battery_voltage,
-                    timestamp=str(self.battery_timestamp),
+                    timestamp=datetime.fromtimestamp(
+                        self.battery_timestamp
+                    ).isoformat(),
                     charging_status=self.is_docked,
                 ),
             )
