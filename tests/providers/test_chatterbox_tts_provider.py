@@ -136,12 +136,9 @@ class TestModelLoading:
         provider = ChatterboxTTSProvider(model_variant="standard", device="cpu")
 
         provider._load_model()
-        mock_torch.device.assert_called_once_with("cpu")
         mock_chatterbox_modules[
             "tts"
-        ].ChatterboxTTS.from_pretrained.assert_called_once_with(
-            device=mock_torch.device.return_value
-        )
+        ].ChatterboxTTS.from_pretrained.assert_called_once_with(device="cpu")
         assert provider._sample_rate == 24000
 
     @patch("providers.chatterbox_tts_provider.torch")
@@ -157,11 +154,10 @@ class TestModelLoading:
         provider = ChatterboxTTSProvider(model_variant="multilingual", device="cpu")
 
         provider._load_model()
-        mock_torch.device.assert_called_once_with("cpu")
         mock_chatterbox_modules[
             "mtl_tts"
         ].ChatterboxMultilingualTTS.from_pretrained.assert_called_once_with(
-            device=mock_torch.device.return_value
+            device="cpu"
         )
 
     @patch("providers.chatterbox_tts_provider.torch")

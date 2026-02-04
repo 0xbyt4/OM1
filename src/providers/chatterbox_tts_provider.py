@@ -101,16 +101,18 @@ class ChatterboxTTSProvider:
             f"Loading Chatterbox {self._model_variant} model on {self._device}..."
         )
 
-        device = torch.device(self._device)
-
         if self._model_variant == "multilingual":
             from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 
-            self._model = ChatterboxMultilingualTTS.from_pretrained(device=device)
+            self._model = ChatterboxMultilingualTTS.from_pretrained(
+                device=self._device  # type: ignore[arg-type]
+            )
         else:
             from chatterbox.tts import ChatterboxTTS
 
-            self._model = ChatterboxTTS.from_pretrained(device=device)
+            self._model = ChatterboxTTS.from_pretrained(
+                device=self._device  # type: ignore[arg-type]
+            )
 
         self._sample_rate = self._model.sr
 
