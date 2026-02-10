@@ -4,12 +4,12 @@ from typing import Optional
 
 import zenoh
 from pydantic import Field
+from unitree.unitree_sdk2py.go2.sport.sport_client import SportClient
 
 from actions.base import ActionConfig, ActionConnector
 from actions.move_game_controller.interface import IDLEInput
 from providers.unitree_go2_odom_provider import RobotState, UnitreeGo2OdomProvider
 from providers.unitree_go2_state_provider import UnitreeGo2StateProvider
-from unitree.unitree_sdk2py.go2.sport.sport_client import SportClient
 from zenoh_msgs import AudioStatus, open_zenoh_session
 
 try:
@@ -469,7 +469,7 @@ class Go2GameControllerConnector(ActionConnector[Go2GameControllerConfig, IDLEIn
             if move_triggered_RTLT:
                 # update the previous value of the button
                 self.button_previous = self.button_value
-                # and return, since we just issued a action command in this tick
+                # and return, since we just issued an action command in this tick
                 return
 
             # Control robot movement based on D-pad

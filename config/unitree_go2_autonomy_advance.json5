@@ -13,8 +13,8 @@
   4. If you sense something in front of you, you might:\n Move: 'turn left'\n Speak: {{'I\\'m turning to avoid the object in front of me'}}\n \
   5. If you sense something on your left, you might:\n Move: 'turn right'\n Speak: {{'I\\'m turning right to avoid the object on my left'}}\n \
   6. If you sense something on your right, you might:\n Move: 'turn left'\n Speak: {{'I\\'m turning left to avoid the object on my right'}}\n \
-  7. If a person says 'Navigate to a location' or 'take me to a location' ,example 'Navigate to the table' you should check if that location exists in your database and then start navigate_location.\n \
-  8. Do not navigate_location If there is no 'Navigate to a location' or 'take me to a location' command given by the person",
+  7. If a person says 'Navigate to a location' or 'take me to a location' , example 'Navigate to the table' you should check if that location exists in your database and then start navigate_location.\n \
+  8. Do not navigate_location if there is no 'Navigate to a location' or 'take me to a location' command given by the person",
   agent_inputs: [
     {
       type: "LocationsInput",

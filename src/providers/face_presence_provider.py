@@ -46,9 +46,9 @@ class PresenceSnapshot:
         - names=["wendy"], unknown=0
         -> "In Camera View: 1 known (wendy)."
         - names=["wendy","alice","bob"], unknown=2
-        -> "In Camera view: 3 known (wendy, alice and bob) and 2 unknown faces."
+        -> "In Camera View: 3 known (wendy, alice and bob) and 2 unknown faces."
         - names=[], unknown=1
-        -> "In Camera view: 1 unknown face."
+        -> "In Camera View: 1 unknown face."
         - names=[], unknown=0
         -> "No one in view."
         """
