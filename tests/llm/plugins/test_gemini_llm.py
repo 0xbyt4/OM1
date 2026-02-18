@@ -60,9 +60,9 @@ def mock_avatar_components():
 
     with (
         patch(
-            "llm.plugins.deepseek_llm.AvatarLLMState.trigger_thinking", mock_decorator
+            "llm.plugins.gemini_llm.AvatarLLMState.trigger_thinking", mock_decorator
         ),
-        patch("llm.plugins.deepseek_llm.AvatarLLMState") as mock_avatar_state,
+        patch("llm.plugins.gemini_llm.AvatarLLMState") as mock_avatar_state,
         patch("providers.avatar_provider.AvatarProvider") as mock_avatar_provider,
         patch(
             "providers.avatar_llm_state_provider.AvatarProvider"

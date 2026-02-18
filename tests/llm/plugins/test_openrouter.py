@@ -62,9 +62,9 @@ def mock_avatar_components():
 
     with (
         patch(
-            "llm.plugins.deepseek_llm.AvatarLLMState.trigger_thinking", mock_decorator
+            "llm.plugins.openrouter.AvatarLLMState.trigger_thinking", mock_decorator
         ),
-        patch("llm.plugins.deepseek_llm.AvatarLLMState") as mock_avatar_state,
+        patch("llm.plugins.openrouter.AvatarLLMState") as mock_avatar_state,
         patch("providers.avatar_provider.AvatarProvider") as mock_avatar_provider,
         patch(
             "providers.avatar_llm_state_provider.AvatarProvider"
@@ -106,8 +106,8 @@ async def test_init_empty_key():
 async def test_ask_success(llm, mock_response):
     with pytest.MonkeyPatch.context() as m:
         m.setattr(
-            llm._client.beta.chat.completions,
-            "parse",
+            llm._client.chat.completions,
+            "create",
             AsyncMock(return_value=mock_response),
         )
 
@@ -133,12 +133,14 @@ async def test_ask_with_tool_calls(llm, mock_response_with_tool_calls):
 @pytest.mark.asyncio
 async def test_ask_invalid_json(llm):
     invalid_response = MagicMock()
-    invalid_response.choices = [MagicMock(message=MagicMock(content="invalid"))]
+    invalid_response.choices = [
+        MagicMock(message=MagicMock(content="invalid", tool_calls=None))
+    ]
 
     with pytest.MonkeyPatch.context() as m:
         m.setattr(
-            llm._client.beta.chat.completions,
-            "parse",
+            llm._client.chat.completions,
+            "create",
             AsyncMock(return_value=invalid_response),
         )
 
@@ -150,8 +152,8 @@ async def test_ask_invalid_json(llm):
 async def test_ask_api_error(llm):
     with pytest.MonkeyPatch.context() as m:
         m.setattr(
-            llm._client.beta.chat.completions,
-            "parse",
+            llm._client.chat.completions,
+            "create",
             AsyncMock(side_effect=Exception("API error")),
         )
 
